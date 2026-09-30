@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ডিজিটাল ওয়ালেট ও ব্যাংক ড্যাশবোর্ড</title>
+    <!-- সিএসএস ফাইল লিঙ্ক -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="container">
+        <!-- সাইডবার নেভিগেশন -->
+        <aside class="sidebar">
+            <div>
+                <div class="logo-area">
+                    <div class="logo-icon">৳</div>
+                    <div>
+                        <h2>স্মার্ট ওয়ালেট</h2>
+                        <p>ব্যাংক ও ডিজিটাল সেবা</p>
+                    </div>
+                </div>
+
+                <nav class="nav-menu">
+                    <a href="#" class="nav-item active">📊 ড্যাশবোর্ড</a>
+                    <a href="#" class="nav-item">📱 মোবাইল ওয়ালেট</a>
+                    <a href="#" class="nav-item">🏦 ব্যাংক অ্যাকাউন্ট</a>
+                    <a href="#" class="nav-item">📄 লেনদেন ইতিহাস</a>
+                    <a href="#" class="nav-item">⚙️ সেটিংসে</a>
+                </nav>
+            </div>
+        </aside>
+
+        <!-- প্রধান কন্টেন্ট -->
+        <main class="main-content">
+            
+            <!-- টপ হেডার -->
+            <header class="header">
+                <div>
+                    <h2>স্বাগতম, আব্দুল্লাহ!</h2>
+                    <p class="sub-title">আপনার সকল ওয়ালেট ও ব্যাংকের হিসাব একনজরে দেখে নিন।</p>
+                </div>
+                <div class="btn-group">
+                    <button onclick="openModal('addModal')" class="btn btn-success">+ ফান্ড যুক্ত করুন</button>
+                    <button onclick="openModal('transferModal')" class="btn btn-primary">➔ ট্রান্সফার করুন</button>
+                </div>
+            </header>
+
+            <!-- ব্যালেন্স কার্ড -->
+            <section class="stats-grid">
+                <div class="card card-main">
+                    <p class="card-title">সর্বমোট ব্যালেন্স</p>
+                    <div class="card-amount" id="totalBalanceDisplay">৳ ২,৫০,৪৫০</div>
+                    <p class="card-sub-green">↑ লাইভ ব্যালেন্স আপডেট</p>
+                </div>
+
+                <div class="card">
+                    <p class="card-title">মোবাইল ওয়ালেটস</p>
+                    <div class="card-amount pink-text" id="walletTotalDisplay">৳ ৬৫,৪৫০</div>
+                    <p class="card-sub">বিকাশ, নগদ, রকেট, উপায়</p>
+                </div>
+
+                <div class="card">
+                    <p class="card-title">ব্যাংক অ্যাকাউন্টস</p>
+                    <div class="card-amount blue-text" id="bankTotalDisplay">৳ ১,৮৫,০০০</div>
+                    <p class="card-sub">EBL, City Bank, ইসলামী ব্যাংক</p>
+                </div>
+            </section>
+
+            <!-- ওয়ালেট ও ব্যাংক তালিকা -->
+            <div class="content-grid">
+                
+                <!-- মোবাইল ওয়ালেট -->
+                <div>
+                    <h3 class="section-title">📱 মোবাইল ওয়ালেট</h3>
+                    
+                    <div class="list-item">
+                        <div class="item-info">
+                            <div class="item-icon bkash-bg">bK</div>
+                            <div>
+                                <h4>বিকাশ (bKash)</h4>
+                                <p class="sub-text">01712-XXXXXX</p>
+                            </div>
+                        </div>
+                        <div class="item-status">
+                            <strong id="bkashBalDisplay">৳ ২৫,০০০</strong>
+                            <p class="status-active">সক্রিয়</p>
+                        </div>
+                    </div>
+
+                    <div class="list-item">
+                        <div class="item-info">
+                            <div class="item-icon nagad-bg">NG</div>
+                            <div>
+                                <h4>নগদ (Nagad)</h4>
+                                <p class="sub-text">01812-XXXXXX</p>
+                            </div>
+                        </div>
+                        <div class="item-status">
+                            <strong id="nagadBalDisplay">৳ ১৫,৪৫০</strong>
+                            <p class="status-active">সক্রিয়</p>
+                        </div>
+                    </div>
+
+                    <div class="list-item">
+                        <div class="item-info">
+                            <div class="item-icon rocket-bg">RO</div>
+                            <div>
+                                <h4>রকেট (Rocket)</h4>
+                                <p class="sub-text">01912-XXXXXX</p>
+                            </div>
+                        </div>
+                        <div class="item-status">
+                            <strong id="rocketBalDisplay">৳ ১৫,০০০</strong>
+                            <p class="status-active">সক্রিয়</p>
+                        </div>
+                    </div>
+
+                    <div class="list-item">
+                        <div class="item-info">
+                            <div class="item-icon upay-bg">UP</div>
+                            <div>
+                                <h4>উপায় (upay)</h4>
+                                <p class="sub-text">01612-XXXXXX</p>
+                            </div>
+                        </div>
+                        <div class="item-status">
+                            <strong id="upayBalDisplay">৳ ১০,০০০</strong>
+                            <p class="status-active">সক্রিয়</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ব্যাংক অ্যাকাউন্ট -->
+                <div>
+                    <h3 class="section-title">🏦 ব্যাংক অ্যাকাউন্ট</h3>
+
+                    <div class="list-item">
+                        <div class="item-info">
+                            <div class="item-icon ebl-bg">EBL</div>
+                            <div>
+                                <h4>Eastern Bank PLC</h4>
+                                <p class="sub-text">Acc: 101XXXXXX</p>
+                            </div>
+                        </div>
+                        <div class="item-status">
+                            <strong id="eblBalDisplay">৳ ৬০,০০০</strong>
+                            <p class="status-active">সেভিংস</p>
+                        </div>
+                    </div>
+
+                    <div class="list-item">
+                        <div class="item-info">
+                            <div class="item-icon city-bg">CITY</div>
+                            <div>
+                                <h4>City Bank PLC</h4>
+                                <p class="sub-text">Acc: 310XXXXXX</p>
+                            </div>
+                        </div>
+                        <div class="item-status">
+                            <strong id="cityBalDisplay">৳ ৭৫,০০০</strong>
+                            <p class="status-active">স্যালারি</p>
+                        </div>
+                    </div>
+
+                    <div class="list-item">
+                        <div class="item-info">
+                            <div class="item-icon ib-bg">IB</div>
+                            <div>
+                                <h4>ইসলামী ব্যাংক</h4>
+                                <p class="sub-text">Acc: 2050XXXXXXX</p>
+                            </div>
+                        </div>
+                        <div class="item-status">
+                            <strong id="ibBalDisplay">৳ ৫০,০০০</strong>
+                            <p class="status-active">সেভিংস</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- লেনদেন টেবিল -->
+            <section class="table-container">
+                <h3 class="table-title">সাম্প্রতিক লেনদেন</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>বিবরণ</th>
+                            <th>মাধ্যম</th>
+                            <th>প্রাপক/প্রেরক নম্বর</th>
+                            <th>তারিখ ও সময়</th>
+                            <th class="text-right">পরিমাণ</th>
+                        </tr>
+                    </thead>
+                    <tbody id="transactionTableBody">
+                        <!-- জাভাস্ক্রিপ্ট দিয়ে ডাইনামিকালি ডাটাসমূহ এখানে বসবে -->
+                    </tbody>
+                </table>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- টাকা ট্রান্সফার মডাল -->
+    <div id="transferModal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>টাকা ট্রান্সফার করুন</h3>
+                <button onclick="closeModal('transferModal')" class="close-btn">&times;</button>
+            </div>
+            <div class="form-group">
+                <label>কোনটি থেকে পাঠাবেন?</label>
+                <select id="transferFromSelect">
+                    <option value="ebl">Eastern Bank PLC</option>
+                    <option value="city">City Bank PLC</option>
+                    <option value="ib">ইসলামী ব্যাংক</option>
+                    <option value="bkash">বিকাশ (bKash)</option>
+                    <option value="nagad">নগদ (Nagad)</option>
+                    <option value="rocket">রকেট (Rocket)</option>
+                    <option value="upay">উপায় (upay)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>প্রাপক অ্যাকাউন্ট / মোবাইল নম্বর</label>
+                <input type="text" id="transferAccountInput" placeholder="017XXXXXXXX বা অ্যাকাউন্ট নম্বর">
+            </div>
+            <div class="form-group">
+                <label>পরিমাণ (৳)</label>
+                <input type="number" id="transferAmountInput" placeholder="0.00">
+            </div>
+            <button onclick="handleTransferSubmit()" class="btn btn-primary full-width">পাঠিয়ে দিন</button>
+        </div>
+    </div>
+
+    <!-- ফান্ড অ্যাড মডাল -->
+    <div id="addModal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>ফান্ড যুক্ত করুন</h3>
+                <button onclick="closeModal('addModal')" class="close-btn">&times;</button>
+            </div>
+            <div class="form-group">
+                <label>গন্তব্য ওয়ালেট / ব্যাংক</label>
+                <select id="addToSelect">
+                    <option value="ebl">Eastern Bank PLC</option>
+                    <option value="city">City Bank PLC</option>
+                    <option value="ib">ইসলামী ব্যাংক</option>
+                    <option value="bkash">বিকাশ (bKash)</option>
+                    <option value="nagad">নগদ (Nagad)</option>
+                    <option value="rocket">রকেট (Rocket)</option>
+                    <option value="upay">উপায় (upay)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>উৎস্য অ্যাকাউন্ট / রেফারেন্স নম্বর</label>
+                <input type="text" id="addAccountInput" placeholder="017XXXXXXXX বা রেফারেন্স">
+            </div>
+            <div class="form-group">
+                <label>পরিমাণ (৳)</label>
+                <input type="number" id="addAmountInput" placeholder="0.00">
+            </div>
+            <button onclick="handleAddMoneySubmit()" class="btn btn-success full-width">যোগ করুন</button>
+        </div>
+    </div>
+
+    <!-- জাভাস্ক্রিপ্ট ফাইল লিঙ্ক -->
+    <script src="script.js"></script>
+</body>
+</html>
