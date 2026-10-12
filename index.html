@@ -3,268 +3,425 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ডিজিটাল ওয়ালেট ও ব্যাংক ড্যাশবোর্ড</title>
-    <!-- সিএসএস ফাইল লিঙ্ক -->
+    <title>World Bank - Digital Wallet & Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <div class="container">
-        <!-- সাইডবার নেভিগেশন -->
-        <aside class="sidebar">
-            <div>
-                <div class="logo-area">
-                    <div class="logo-icon">৳</div>
-                    <div>
-                        <h2>স্মার্ট ওয়ালেট</h2>
-                        <p>ব্যাংক ও ডিজিটাল সেবা</p>
-                    </div>
-                </div>
+    <!-- ১. অথেনটিকেশন সেকশন -->
+    <div id="authSection" class="auth-container">
+        <div class="lang-switch-box">
+            <button id="btnLangBN" class="lang-btn active" onclick="setLanguage('bn')">বাংলা</button>
+            <button id="btnLangEN" class="lang-btn" onclick="setLanguage('en')">English</button>
+        </div>
 
-                <nav class="nav-menu">
-                    <a href="#" class="nav-item active">📊 ড্যাশবোর্ড</a>
-                    <a href="#" class="nav-item">📱 মোবাইল ওয়ালেট</a>
-                    <a href="#" class="nav-item">🏦 ব্যাংক অ্যাকাউন্ট</a>
-                    <a href="#" class="nav-item">📄 লেনদেন ইতিহাস</a>
-                    <a href="#" class="nav-item">⚙️ সেটিংসে</a>
-                </nav>
-            </div>
-        </aside>
+        <div class="brand-logo">
+            <h2>🏦 World Bank</h2>
+            <p data-bn="আপনার সুরক্ষিত ডিজিটাল ওয়ালেট" data-en="Your Secure Digital Wallet">আপনার সুরক্ষিত ডিজিটাল ওয়ালেট</p>
+        </div>
 
-        <!-- প্রধান কন্টেন্ট -->
-        <main class="main-content">
+        <div class="auth-tabs">
+            <button id="loginTab" class="tab-btn active" onclick="switchTab('login')" data-bn="লগইন" data-en="Login">লগইন</button>
+            <button id="signUpTab" class="tab-btn" onclick="switchTab('signup')" data-bn="সাইন আপ" data-en="Sign Up">সাইন আপ</button>
+        </div>
+
+        <p id="errorText" class="error-msg" data-bn="ইমেইল অথবা পাসওয়ার্ড ভুল দেওয়া হয়েছে!" data-en="Incorrect email or password!">ইমেইল অথবা পাসওয়ার্ড ভুল দেওয়া হয়েছে!</p>
+
+        <!-- সাইন আপ ফর্ম -->
+        <form id="signUpForm" class="hidden" onsubmit="handleSignUp(event)" method="POST" action="javascript:void(0);">
+            <input type="text" id="regName" placeholder="আপনার পূর্ণ নাম" required autocomplete="name" data-bn-ph="আপনার পূর্ণ নাম" data-en-ph="Full Name">
+            <input type="email" id="regEmail" name="username" placeholder="ইমেইল অ্যাড্রেস" required autocomplete="username" data-bn-ph="ইমেইল অ্যাড্রেস" data-en-ph="Email Address">
+            <input type="text" id="regPhone" placeholder="মোবাইল নম্বর" required autocomplete="tel" data-bn-ph="মোবাইল নম্বর" data-en-ph="Phone Number">
             
-            <!-- টপ হেডার -->
-            <header class="header">
-                <div>
-                    <h2>স্বাগতম, আব্দুল্লাহ!</h2>
-                    <p class="sub-title">আপনার সকল ওয়ালেট ও ব্যাংকের হিসাব একনজরে দেখে নিন।</p>
-                </div>
-                <div class="btn-group">
-                    <button onclick="openModal('addModal')" class="btn btn-success">+ ফান্ড যুক্ত করুন</button>
-                    <button onclick="openModal('transferModal')" class="btn btn-primary">➔ ট্রান্সফার করুন</button>
-                </div>
-            </header>
+            <div class="password-wrapper">
+                <input type="password" id="regPass" name="password" placeholder="পাসওয়ার্ড" required autocomplete="new-password" data-bn-ph="পাসওয়ার্ড" data-en-ph="Password">
+                <button type="button" class="pwd-toggle-btn" onclick="togglePasswordVisibility('regPass', this)">👁️</button>
+            </div>
+            
+            <button type="submit" class="btn btn-pink" data-bn="সাইন আপ করুন" data-en="Sign Up">সাইন আপ করুন</button>
+        </form>
 
-            <!-- ব্যালেন্স কার্ড -->
-            <section class="stats-grid">
-                <div class="card card-main">
-                    <p class="card-title">সর্বমোট ব্যালেন্স</p>
-                    <div class="card-amount" id="totalBalanceDisplay">৳ ২,৫০,৪৫০</div>
-                    <p class="card-sub-green">↑ লাইভ ব্যালেন্স আপডেট</p>
-                </div>
+        <!-- লগইন ফর্ম -->
+        <form id="loginForm" onsubmit="handleLogin(event)" method="POST" action="javascript:void(0);">
+            <input type="email" id="logEmail" name="username" placeholder="ইমেইল অ্যাড্রেস" required autocomplete="username" data-bn-ph="ইমেইল অ্যাড্রেস" data-en-ph="Email Address">
+            
+            <div class="password-wrapper">
+                <input type="password" id="logPass" name="password" placeholder="পাসওয়ার্ড" required autocomplete="current-password" data-bn-ph="পাসওয়ার্ড" data-en-ph="Password">
+                <button type="button" class="pwd-toggle-btn" onclick="togglePasswordVisibility('logPass', this)">👁️</button>
+            </div>
+            
+            <div class="forgot-pass-link" onclick="toggleForgotModal()">
+                <a href="javascript:void(0);" data-bn="পাসওয়ার্ড ভুলে গেছেন? (Forgot Password?)" data-en="Forgot Password?">পাসওয়ার্ড ভুলে গেছেন? (Forgot Password?)</a>
+            </div>
+            
+            <button type="submit" class="btn btn-pink" data-bn="প্রবেশ করুন" data-en="Login">প্রবেশ করুন</button>
+        </form>
+    </div>
 
-                <div class="card">
-                    <p class="card-title">মোবাইল ওয়ালেটস</p>
-                    <div class="card-amount pink-text" id="walletTotalDisplay">৳ ৬৫,৪৫০</div>
-                    <p class="card-sub">বিকাশ, নগদ, রকেট, উপায়</p>
+    <!-- ২. মূল ড্যাশবোর্ড সেকশন -->
+    <div id="dashboardSection" class="dashboard hidden">
+        
+        <!-- টপ হেডার -->
+        <div class="bkash-header">
+            <div class="top-row">
+                <div class="user-info">
+                    <div class="avatar-icon">👤</div>
+                    <div class="user-text">
+                        <span id="userPhoneDisp">01815395746</span>
+                        <div class="balance-pill" id="balancePill" onclick="toggleBalanceVisibility()">
+                            <span class="currency-symbol">৳</span>
+                            <span id="balancePillText">Tap for Balance</span>
+                        </div>
+                    </div>
                 </div>
-
-                <div class="card">
-                    <p class="card-title">ব্যাংক অ্যাকাউন্টস</p>
-                    <div class="card-amount blue-text" id="bankTotalDisplay">৳ ১,৮৫,০০০</div>
-                    <p class="card-sub">EBL, City Bank, ইসলামী ব্যাংক</p>
+                <div class="header-actions">
+                    <button onclick="setLanguage(currentLang === 'bn' ? 'en' : 'bn')" class="lang-toggle-badge" id="dashLangBtn">EN</button>
+                    <button onclick="toggleProfileModal()" class="admin-icon-btn" title="Profile Settings">👤</button>
+                    <button onclick="logout()" class="logout-icon-btn" title="Logout">🚪</button>
                 </div>
-            </section>
+            </div>
+        </div>
 
-            <!-- ওয়ালেট ও ব্যাংক তালিকা -->
-            <div class="content-grid">
+        <!-- সার্ভিস গ্রিড -->
+        <div class="service-container">
+            <div class="service-grid">
+                <div class="service-item" onclick="scrollToAction('Withdraw')">
+                    <div class="icon-circle">💸</div>
+                    <span data-bn="Withdraw" data-en="Withdraw">Withdraw</span>
+                </div>
+                <div class="service-item" onclick="scrollToAction('Deposit')">
+                    <div class="icon-circle">📥</div>
+                    <span data-bn="Deposit" data-en="Deposit">Deposit</span>
+                </div>
+                <div class="service-item">
+                    <div class="icon-circle">📱</div>
+                    <span data-bn="Mobile Top Up" data-en="Mobile Top Up">Mobile Top Up</span>
+                </div>
+                <div class="service-item" onclick="openInboxModal()">
+                    <div class="icon-circle" style="background:#e0f2fe; border-color:#bae6fd;">📬</div>
+                    <span data-bn="Inbox (ইনবক্স)" data-en="Inbox">Inbox (ইনবক্স)</span>
+                </div>
+                <div class="service-item" onclick="toggleProfileModal()">
+                    <div class="icon-circle">⚙️</div>
+                    <span data-bn="Profile Setting" data-en="Profile Setting">Profile Setting</span>
+                </div>
+                <div class="service-item">
+                    <div class="icon-circle">🏦</div>
+                    <span data-bn="World Bank" data-en="World Bank">World Bank</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ব্যাংক ও ওয়ালেট ব্যালেন্স সমূহ -->
+        <div class="bank-section">
+            <h3 data-bn="🏦 World Bank ও অন্যান্য ওয়ালেট ব্যালেন্স" data-en="🏦 World Bank & Wallet Balances">🏦 World Bank ও অন্যান্য ওয়ালেট ব্যালেন্স</h3>
+            <div class="cards-grid">
+                <div class="card worldbank-card"><h4>World Bank</h4><h3 id="bal_WorldBank">৳ 0</h3></div>
+                <div class="card"><h4>bKash</h4><h3 id="bal_bKash">৳ 0</h3></div>
+                <div class="card"><h4>Nagad</h4><h3 id="bal_Nagad">৳ 0</h3></div>
+                <div class="card"><h4>Rocket</h4><h3 id="bal_Rocket">৳ 0</h3></div>
+                <div class="card"><h4>Upay</h4><h3 id="bal_Upay">৳ 0</h3></div>
+                <div class="card"><h4>DBBL</h4><h3 id="bal_DBBL">৳ 0</h3></div>
+                <div class="card"><h4>IBBL</h4><h3 id="bal_IBBL">৳ 0</h3></div>
+                <div class="card"><h4>City Bank</h4><h3 id="bal_City">৳ 0</h3></div>
+            </div>
+        </div>
+
+        <!-- লেনদেন ফর্মসমূহ (Withdraw / Deposit) -->
+        <div class="actions-grid" id="actionForms">
+            <!-- Deposit Form -->
+            <div class="action-box" id="depositFormBox">
+                <div class="box-header-flex">
+                    <h3 data-bn="📥 Deposit (ডিপোজিট)" data-en="📥 Deposit Request">📥 Deposit (ডিপোজিট)</h3>
+                    <button type="button" class="btn-cancel-small" onclick="scrollToTop()" data-bn="ক্যানসেল ⬆️" data-en="Cancel ⬆️">ক্যানসেল ⬆️</button>
+                </div>
+                <form onsubmit="submitTransactionRequest(event, 'Deposit')">
+                    <select class="methodSelect" required>
+                        <option value="" data-bn="মেথড সিলেক্ট করুন" data-en="Select Method">মেথড সিলেক্ট করুন</option>
+                        <option value="WorldBank">World Bank</option>
+                        <option value="bKash">bKash</option>
+                        <option value="Nagad">Nagad</option>
+                        <option value="Rocket">Rocket</option>
+                        <option value="Upay">Upay</option>
+                        <option value="DBBL">DBBL</option>
+                        <option value="IBBL">IBBL</option>
+                        <option value="City">City Bank</option>
+                    </select>
+                    <input type="text" class="phoneInput" placeholder="ফোন নম্বর / একাউন্ট নম্বর" required data-bn-ph="ফোন নম্বর / একাউন্ট নম্বর" data-en-ph="Phone / Account No">
+                    <input type="number" class="amountInput" placeholder="পরিমাণ (৳)" required data-bn-ph="পরিমাণ (৳)" data-en-ph="Amount (৳)">
+                    <input type="text" class="trxInput" placeholder="ট্রানজেকশন আইডি (TrxID)" required data-bn-ph="ট্রানজেকশন আইডি (TrxID)" data-en-ph="Transaction ID (TrxID)">
+                    <div class="btn-row-flex">
+                        <button type="submit" class="btn btn-pink" data-bn="ডিপোজিট রিকোয়েস্ট পাঠান" data-en="Send Deposit Request">ডিপোজিট রিকোয়েস্ট পাঠান</button>
+                        <button type="button" class="btn btn-cancel-btn" onclick="scrollToTop()" data-bn="ফিরে যান (Back)" data-en="Cancel & Back">ফিরে যান (Back)</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Withdraw Form -->
+            <div class="action-box" id="withdrawFormBox">
+                <div class="box-header-flex">
+                    <h3 data-bn="📤 Withdraw (উইথড্র)" data-en="📤 Withdraw Request">📤 Withdraw (উইথড্র)</h3>
+                    <button type="button" class="btn-cancel-small" onclick="scrollToTop()" data-bn="ক্যানসেল ⬆️" data-en="Cancel ⬆️">ক্যানসেল ⬆️</button>
+                </div>
+                <form onsubmit="submitTransactionRequest(event, 'Withdraw')">
+                    <select class="methodSelect" required>
+                        <option value="" data-bn="কোথা থেকে উইথড্র করবেন?" data-en="Select Source">কোথা থেকে উইথড্র করবেন?</option>
+                        <option value="WorldBank">World Bank</option>
+                        <option value="bKash">bKash</option>
+                        <option value="Nagad">Nagad</option>
+                        <option value="Rocket">Rocket</option>
+                        <option value="Upay">Upay</option>
+                        <option value="DBBL">DBBL</option>
+                        <option value="IBBL">IBBL</option>
+                        <option value="City">City Bank</option>
+                    </select>
+                    <input type="text" class="phoneInput" placeholder="প্রাপকের ফোন / একাউন্ট নম্বর" required data-bn-ph="প্রাপকের ফোন / একাউন্ট নম্বর" data-en-ph="Receiver Phone / Account">
+                    <input type="number" class="amountInput" placeholder="পরিমাণ (৳)" required data-bn-ph="পরিমাণ (৳)" data-en-ph="Amount (৳)">
+                    <input type="text" class="trxInput" placeholder="ট্রানজেকশন আইডি (TrxID)" required data-bn-ph="ট্রানজেকশন আইডি (TrxID)" data-en-ph="Transaction ID (TrxID)">
+                    <div class="btn-row-flex">
+                        <button type="submit" class="btn btn-send" data-bn="উইথড্র রিকোয়েস্ট পাঠান" data-en="Send Withdraw Request">উইথড্র রিকোয়েস্ট পাঠান</button>
+                        <button type="button" class="btn btn-cancel-btn" onclick="scrollToTop()" data-bn="ফিরে যান (Back)" data-en="Cancel & Back">ফিরে যান (Back)</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- এডমিন প্যানেল ফুটার বাটন -->
+        <div class="secret-admin-footer">
+            <span onclick="toggleAdminModal()" title="System Config">⚙️ System Configuration</span>
+        </div>
+    </div>
+
+    <!-- ৩. পাসওয়ার্ড রিকভারি মডাল -->
+    <div id="forgotModal" class="modal-overlay hidden">
+        <div class="modal-content" style="max-width: 400px; background: #ffffff; color: #1e293b;">
+            <div class="modal-header">
+                <h2 data-bn="🔑 পাসওয়ার্ড রিকভারি" data-en="🔑 Password Recovery">🔑 পাসওয়ার্ড রিকভারি</h2>
+                <button onclick="toggleForgotModal()" class="close-btn" style="color:#0f172a;">✖</button>
+            </div>
+            <form onsubmit="handleForgotPassword(event)" style="margin-top:10px;">
+                <p style="font-size:12px; color:#64748b; margin-bottom:10px;" data-bn="আপনার অ্যাকাউন্টের নিবন্ধিত ইমেইল ও ফোন নম্বর দিন:" data-en="Enter your registered email & phone number:">আপনার অ্যাকাউন্টের নিবন্ধিত ইমেইল ও ফোন নম্বর দিন:</p>
                 
-                <!-- মোবাইল ওয়ালেট -->
-                <div>
-                    <h3 class="section-title">📱 মোবাইল ওয়ালেট</h3>
-                    
-                    <div class="list-item">
-                        <div class="item-info">
-                            <div class="item-icon bkash-bg">bK</div>
-                            <div>
-                                <h4>বিকাশ (bKash)</h4>
-                                <p class="sub-text">01712-XXXXXX</p>
-                            </div>
-                        </div>
-                        <div class="item-status">
-                            <strong id="bkashBalDisplay">৳ ২৫,০০০</strong>
-                            <p class="status-active">সক্রিয়</p>
-                        </div>
-                    </div>
-
-                    <div class="list-item">
-                        <div class="item-info">
-                            <div class="item-icon nagad-bg">NG</div>
-                            <div>
-                                <h4>নগদ (Nagad)</h4>
-                                <p class="sub-text">01812-XXXXXX</p>
-                            </div>
-                        </div>
-                        <div class="item-status">
-                            <strong id="nagadBalDisplay">৳ ১৫,৪৫০</strong>
-                            <p class="status-active">সক্রিয়</p>
-                        </div>
-                    </div>
-
-                    <div class="list-item">
-                        <div class="item-info">
-                            <div class="item-icon rocket-bg">RO</div>
-                            <div>
-                                <h4>রকেট (Rocket)</h4>
-                                <p class="sub-text">01912-XXXXXX</p>
-                            </div>
-                        </div>
-                        <div class="item-status">
-                            <strong id="rocketBalDisplay">৳ ১৫,০০০</strong>
-                            <p class="status-active">সক্রিয়</p>
-                        </div>
-                    </div>
-
-                    <div class="list-item">
-                        <div class="item-info">
-                            <div class="item-icon upay-bg">UP</div>
-                            <div>
-                                <h4>উপায় (upay)</h4>
-                                <p class="sub-text">01612-XXXXXX</p>
-                            </div>
-                        </div>
-                        <div class="item-status">
-                            <strong id="upayBalDisplay">৳ ১০,০০০</strong>
-                            <p class="status-active">সক্রিয়</p>
-                        </div>
-                    </div>
+                <input type="email" id="forgotEmailInput" placeholder="নিবন্ধিত ইমেইল" required data-bn-ph="নিবন্ধিত ইমেইল" data-en-ph="Registered Email">
+                <input type="text" id="forgotPhoneInput" placeholder="নিবন্ধিত ফোন নম্বর" required data-bn-ph="নিবন্ধিত ফোন নম্বর" data-en-ph="Registered Phone Number">
+                
+                <div class="btn-row-flex">
+                    <button type="submit" class="btn btn-pink" data-bn="উদ্ধার করুন" data-en="Recover">উদ্ধার করুন</button>
+                    <button type="button" class="btn btn-cancel-btn" onclick="toggleForgotModal()" data-bn="ক্যানসেল (Back)" data-en="Cancel">ক্যানসেল (Back)</button>
                 </div>
-
-                <!-- ব্যাংক অ্যাকাউন্ট -->
-                <div>
-                    <h3 class="section-title">🏦 ব্যাংক অ্যাকাউন্ট</h3>
-
-                    <div class="list-item">
-                        <div class="item-info">
-                            <div class="item-icon ebl-bg">EBL</div>
-                            <div>
-                                <h4>Eastern Bank PLC</h4>
-                                <p class="sub-text">Acc: 101XXXXXX</p>
-                            </div>
-                        </div>
-                        <div class="item-status">
-                            <strong id="eblBalDisplay">৳ ৬০,০০০</strong>
-                            <p class="status-active">সেভিংস</p>
-                        </div>
-                    </div>
-
-                    <div class="list-item">
-                        <div class="item-info">
-                            <div class="item-icon city-bg">CITY</div>
-                            <div>
-                                <h4>City Bank PLC</h4>
-                                <p class="sub-text">Acc: 310XXXXXX</p>
-                            </div>
-                        </div>
-                        <div class="item-status">
-                            <strong id="cityBalDisplay">৳ ৭৫,০০০</strong>
-                            <p class="status-active">স্যালারি</p>
-                        </div>
-                    </div>
-
-                    <div class="list-item">
-                        <div class="item-info">
-                            <div class="item-icon ib-bg">IB</div>
-                            <div>
-                                <h4>ইসলামী ব্যাংক</h4>
-                                <p class="sub-text">Acc: 2050XXXXXXX</p>
-                            </div>
-                        </div>
-                        <div class="item-status">
-                            <strong id="ibBalDisplay">৳ ৫০,০০০</strong>
-                            <p class="status-active">সেভিংস</p>
-                        </div>
-                    </div>
-                </div>
-
-            </div>
-
-            <!-- লেনদেন টেবিল -->
-            <section class="table-container">
-                <h3 class="table-title">সাম্প্রতিক লেনদেন</h3>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>বিবরণ</th>
-                            <th>মাধ্যম</th>
-                            <th>প্রাপক/প্রেরক নম্বর</th>
-                            <th>তারিখ ও সময়</th>
-                            <th class="text-right">পরিমাণ</th>
-                        </tr>
-                    </thead>
-                    <tbody id="transactionTableBody">
-                        <!-- জাভাস্ক্রিপ্ট দিয়ে ডাইনামিকালি ডাটাসমূহ এখানে বসবে -->
-                    </tbody>
-                </table>
-            </section>
-
-        </main>
-    </div>
-
-    <!-- টাকা ট্রান্সফার মডাল -->
-    <div id="transferModal" class="modal-overlay">
-        <div class="modal">
-            <div class="modal-header">
-                <h3>টাকা ট্রান্সফার করুন</h3>
-                <button onclick="closeModal('transferModal')" class="close-btn">&times;</button>
-            </div>
-            <div class="form-group">
-                <label>কোনটি থেকে পাঠাবেন?</label>
-                <select id="transferFromSelect">
-                    <option value="ebl">Eastern Bank PLC</option>
-                    <option value="city">City Bank PLC</option>
-                    <option value="ib">ইসলামী ব্যাংক</option>
-                    <option value="bkash">বিকাশ (bKash)</option>
-                    <option value="nagad">নগদ (Nagad)</option>
-                    <option value="rocket">রকেট (Rocket)</option>
-                    <option value="upay">উপায় (upay)</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>প্রাপক অ্যাকাউন্ট / মোবাইল নম্বর</label>
-                <input type="text" id="transferAccountInput" placeholder="017XXXXXXXX বা অ্যাকাউন্ট নম্বর">
-            </div>
-            <div class="form-group">
-                <label>পরিমাণ (৳)</label>
-                <input type="number" id="transferAmountInput" placeholder="0.00">
-            </div>
-            <button onclick="handleTransferSubmit()" class="btn btn-primary full-width">পাঠিয়ে দিন</button>
+            </form>
         </div>
     </div>
 
-    <!-- ফান্ড অ্যাড মডাল -->
-    <div id="addModal" class="modal-overlay">
-        <div class="modal">
+    <!-- ৪. প্রোফাইল সেটিং মডাল -->
+    <div id="profileModal" class="modal-overlay hidden">
+        <div class="modal-content" style="max-width: 400px; background: #ffffff; color: #1e293b;">
             <div class="modal-header">
-                <h3>ফান্ড যুক্ত করুন</h3>
-                <button onclick="closeModal('addModal')" class="close-btn">&times;</button>
+                <h2 data-bn="👤 প্রোফাইল সেটিং" data-en="👤 Profile Settings">👤 প্রোফাইল সেটিং</h2>
+                <button onclick="toggleProfileModal()" class="close-btn" style="color:#0f172a;">✖</button>
             </div>
-            <div class="form-group">
-                <label>গন্তব্য ওয়ালেট / ব্যাংক</label>
-                <select id="addToSelect">
-                    <option value="ebl">Eastern Bank PLC</option>
-                    <option value="city">City Bank PLC</option>
-                    <option value="ib">ইসলামী ব্যাংক</option>
-                    <option value="bkash">বিকাশ (bKash)</option>
-                    <option value="nagad">নগদ (Nagad)</option>
-                    <option value="rocket">রকেট (Rocket)</option>
-                    <option value="upay">উপায় (upay)</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>উৎস্য অ্যাকাউন্ট / রেফারেন্স নম্বর</label>
-                <input type="text" id="addAccountInput" placeholder="017XXXXXXXX বা রেফারেন্স">
-            </div>
-            <div class="form-group">
-                <label>পরিমাণ (৳)</label>
-                <input type="number" id="addAmountInput" placeholder="0.00">
-            </div>
-            <button onclick="handleAddMoneySubmit()" class="btn btn-success full-width">যোগ করুন</button>
+            <form onsubmit="updateUserProfile(event)" style="margin-top:10px;">
+                <label style="font-size:12px; font-weight:bold;" data-bn="পূর্ণ নাম" data-en="Full Name">পূর্ণ নাম</label>
+                <input type="text" id="profNameInput" required>
+                
+                <label style="font-size:12px; font-weight:bold;" data-bn="ফোন নম্বর" data-en="Phone Number">ফোন নম্বর</label>
+                <input type="text" id="profPhoneInput" required>
+                
+                <label style="font-size:12px; font-weight:bold;" data-bn="নতুন পাসওয়ার্ড" data-en="New Password">নতুন পাসওয়ার্ড</label>
+                <div class="password-wrapper">
+                    <input type="password" id="profPassInput" required>
+                    <button type="button" class="pwd-toggle-btn" onclick="togglePasswordVisibility('profPassInput', this)">👁️</button>
+                </div>
+                
+                <div class="btn-row-flex">
+                    <button type="submit" class="btn btn-pink" data-bn="আপডেট করুন" data-en="Update Profile">আপডেট করুন</button>
+                    <button type="button" class="btn btn-cancel-btn" onclick="toggleProfileModal()" data-bn="ক্যানসেল (Back)" data-en="Cancel">ক্যানসেল (Back)</button>
+                </div>
+            </form>
         </div>
     </div>
 
-    <!-- জাভাস্ক্রিপ্ট ফাইল লিঙ্ক -->
+    <!-- ৫. ইনবক্স হিস্ট্রি মডাল (পরিষ্কার দৃশ্যমান ব্যাকগ্রাউন্ড ও ডার্ক টেক্সট সহ) -->
+    <div id="inboxModal" class="modal-overlay hidden">
+        <div class="modal-content inbox-modal-style">
+            <div class="modal-header" style="border-bottom: 2px solid #e2e8f0; padding-bottom:10px;">
+                <h2 style="color: #0f172a; font-size: 18px; font-weight:bold;" data-bn="📬 Transaction Inbox" data-en="📬 Transaction Inbox">📬 Transaction Inbox</h2>
+                <button onclick="openInboxModal()" class="close-btn" style="color:#0f172a; font-size:22px;">✖</button>
+            </div>
+            <div style="margin-top: 15px;">
+                <div class="inbox-table-container">
+                    <table class="inbox-table">
+                        <thead>
+                            <tr>
+                                <th data-bn="Date & Time" data-en="Date & Time">Date & Time</th>
+                                <th data-bn="Type" data-en="Type">Type</th>
+                                <th data-bn="Method" data-en="Method">Method</th>
+                                <th data-bn="Amount" data-en="Amount">Amount</th>
+                                <th data-bn="TrxID" data-en="TrxID">TrxID</th>
+                                <th data-bn="Status" data-en="Status">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="userInboxModalBody">
+                            <!-- জ্যাভাস্ক্রিপ্ট দ্বারা টেক্সট রেন্ডার হবে -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div style="margin-top: 15px; text-align: right;">
+                <button type="button" class="btn btn-cancel-btn" onclick="openInboxModal()" style="width: auto; padding: 6px 18px; font-weight:bold;" data-bn="Close" data-en="Close">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ৬. সেন্ট্রাল এডমিন প্যানেল মডাল -->
+    <div id="adminModal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 data-bn="🔐 World Bank সেন্ট্রাল এডমিন প্যানেল" data-en="🔐 World Bank Central Admin Panel">🔐 World Bank সেন্ট্রাল এডমিন প্যানেল</h2>
+                <button onclick="toggleAdminModal()" class="close-btn">✖</button>
+            </div>
+
+            <!-- এডমিন পাসওয়ার্ড সিকিউরিটি চেক -->
+            <div id="adminAuthBox">
+                <p style="margin-bottom: 10px; font-size: 14px; color: #cbd5e1;" data-bn="এডমিন পাসওয়ার্ড প্রবেশ করান:" data-en="Enter Admin Password:">এডমিন পাসওয়ার্ড প্রবেশ করান:</p>
+                <div class="password-wrapper" style="margin-bottom:12px;">
+                    <input type="password" id="adminPassInput" placeholder="এডমিন পাসওয়ার্ড দিন" style="margin-bottom:0;">
+                    <button type="button" class="pwd-toggle-btn" onclick="togglePasswordVisibility('adminPassInput', this)">👁️</button>
+                </div>
+                <div class="btn-row-flex">
+                    <button onclick="verifyAdminPassword()" class="btn btn-pink" data-bn="লগইন এডমিন" data-en="Login Admin">লগইন এডমিন</button>
+                    <button onclick="toggleAdminModal()" class="btn btn-cancel-btn" data-bn="ক্যানসেল ⬅️" data-en="Cancel ⬅️">ক্যানসেল ⬅️</button>
+                </div>
+            </div>
+
+            <!-- এডমিন কন্ট্রোল ডাটাবেস -->
+            <div id="adminControlBox" class="hidden">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                    <button onclick="refreshAdminData()" class="btn-cancel-small" style="background:#059669; color:white; font-size:12px; padding:6px 12px; border-radius:6px; cursor:pointer;" data-bn="🔄 রিফ্রেশ হিস্ট্রি (Refresh)" data-en="🔄 Refresh History">🔄 রিফ্রেশ হিস্ট্রি (Refresh)</button>
+                    <button onclick="toggleAdminModal()" class="btn-cancel-small" style="background:#ef4444; color:white; font-size:12px; padding:6px 12px; border-radius:6px; cursor:pointer;" data-bn="ফিরে যান (Exit Admin)" data-en="Exit Admin">ফিরে যান (Exit Admin)</button>
+                </div>
+
+                <!-- ১. মেইন ব্যালেন্স কাস্টমাইজেশন -->
+                <div class="admin-settings">
+                    <h4 data-bn="💰 ইউজার মেইন ব্যালেন্স কাস্টমাইজ করুন (বাড়ান / কমান)" data-en="💰 Customize User Main Balance">💰 ইউজার মেইন ব্যালেন্স কাস্টমাইজ করুন (বাড়ান / কমান)</h4>
+                    <form onsubmit="adminUpdateUserBalance(event)" style="margin-top: 10px;">
+                        <select id="admBalanceUserSelect" required style="margin-bottom:8px;">
+                            <option value="">ইউজার সিলেক্ট করুন</option>
+                        </select>
+                        <select id="admBalanceMethodSelect" required style="margin-bottom:8px;">
+                            <option value="WorldBank">World Bank (মেইন ব্যালেন্স)</option>
+                            <option value="bKash">bKash</option>
+                            <option value="Nagad">Nagad</option>
+                            <option value="Rocket">Rocket</option>
+                            <option value="Upay">Upay</option>
+                            <option value="DBBL">DBBL</option>
+                            <option value="IBBL">IBBL</option>
+                            <option value="City">City Bank</option>
+                        </select>
+                        <input type="number" id="admBalanceAmount" placeholder="নতুন ব্যালেন্সের পরিমাণ (৳)" required style="margin-bottom:8px;">
+                        <button type="submit" class="btn btn-pink" style="margin-top: 2px;" data-bn="ব্যালেন্স আপডেট করুন" data-en="Update Balance">ব্যালেন্স আপডেট করুন</button>
+                    </form>
+                </div>
+
+                <!-- ২. ইউজারের নির্দিষ্ট উইথড্র লিমিট কাস্টমাইজেশন (ইউজার সিলেক্ট করে লিমিট দেওয়া) -->
+                <div class="admin-settings">
+                    <h4 data-bn="⚙️ ইউজারের কাস্টম উইথড্র লিমিট সেটআপ (ইমেইল সিলেক্ট করুন)" data-en="⚙️ User Custom Withdraw Limit Setup">⚙️ ইউজারের কাস্টম উইথড্র লিমিট সেটআপ (ইমেইল সিলেক্ট করুন)</h4>
+                    <form onsubmit="adminUpdateUserWithdrawLimit(event)" style="margin-top: 10px;">
+                        <select id="admLimitUserSelect" required style="margin-bottom:8px;">
+                            <option value="">ইউজার ইমেইল সিলেক্ট করুন</option>
+                        </select>
+                        <input type="number" id="admUserCustomLimitInput" placeholder="ইউজারের নির্দিষ্ট উইথড্র লিমিট (৳)" required style="margin-bottom:8px;">
+                        <button type="submit" class="btn btn-pink" style="margin-top: 2px;" data-bn="ইউজার লিমিট সেভ করুন" data-en="Save User Limit">ইউজার লিমিট সেভ করুন</button>
+                    </form>
+                </div>
+
+                <!-- ৩. নতুন ইউজার তৈরি -->
+                <div class="admin-settings">
+                    <h4 data-bn="➕ নতুন ইউজার তৈরি করুন (Create User)" data-en="➕ Create New User">➕ নতুন ইউজার তৈরি করুন (Create User)</h4>
+                    <form onsubmit="adminCreateUser(event)" style="margin-top: 10px;">
+                        <input type="text" id="admUserName" placeholder="ইউজারের নাম" required>
+                        <input type="email" id="admUserEmail" placeholder="ইউজারের ইমেইল" required>
+                        <input type="text" id="admUserPhone" placeholder="ফোন নম্বর" required>
+                        <div class="password-wrapper" style="margin-bottom:12px;">
+                            <input type="password" id="admUserPass" placeholder="পাসওয়ার্ড সেট করুন" required style="margin-bottom:0;">
+                            <button type="button" class="pwd-toggle-btn" onclick="togglePasswordVisibility('admUserPass', this)">👁️</button>
+                        </div>
+                        <button type="submit" class="btn btn-send" style="margin-top: 5px;" data-bn="ইউজার তৈরি করুন" data-en="Create User">ইউজার তৈরি করুন</button>
+                    </form>
+                </div>
+
+                <!-- ৪. নিবন্ধিত ইউজার টেবিল -->
+                <div class="admin-settings">
+                    <h4 data-bn="👥 Registered Users, Balances & Limits" data-en="👥 Registered Users, Balances & Limits">👥 Registered Users, Balances & Limits</h4>
+                    <div class="admin-table-scroll">
+                        <table class="dark-admin-table">
+                            <thead>
+                                <tr>
+                                    <th>নাম</th>
+                                    <th>ইমেইল</th>
+                                    <th>ফোন</th>
+                                    <th>পাসওয়ার্ড</th>
+                                    <th>ব্যালেন্স</th>
+                                    <th>উইথড্র লিমিট</th>
+                                </tr>
+                            </thead>
+                            <tbody id="adminUsersListBody">
+                                <!-- জ্যাভাস্ক্রিপ্ট দ্বারা ফিলআপ হবে -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- ৫. সেন্ট্রাল পেন্ডিং লিস্ট -->
+                <div class="admin-settings">
+                    <h4 data-bn="📋 Pending Requests List" data-en="📋 Pending Requests List">📋 Pending Requests List</h4>
+                    <div class="admin-table-scroll">
+                        <table class="dark-admin-table">
+                            <thead>
+                                <tr>
+                                    <th data-bn="ইউজার" data-en="User">ইউজার</th>
+                                    <th data-bn="টাইপ" data-en="Type">টাইপ</th>
+                                    <th data-bn="মেথড" data-en="Method">মেথড</th>
+                                    <th data-bn="নম্বর" data-en="Number">নম্বর</th>
+                                    <th data-bn="পরিমাণ" data-en="Amount">পরিমাণ</th>
+                                    <th data-bn="TrxID" data-en="TrxID">TrxID</th>
+                                    <th data-bn="অ্যাকশন" data-en="Action">অ্যাকশন</th>
+                                </tr>
+                            </thead>
+                            <tbody id="adminPendingTableBody">
+                                <!-- জ্যাভাস্ক্রিপ্ট দ্বারা ফিলআপ হবে -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- ৬. অল ট্রানজেকশন প্রসেসড হিস্ট্রি -->
+                <div class="admin-settings">
+                    <h4 data-bn="📁 All Completed & Processed Transactions History" data-en="📁 All Completed & Processed Transactions History">📁 All Completed & Processed Transactions History</h4>
+                    <div class="admin-table-scroll">
+                        <table class="dark-admin-table">
+                            <thead>
+                                <tr>
+                                    <th>ইউজার</th>
+                                    <th>টাইপ</th>
+                                    <th>মেথড</th>
+                                    <th>পরিমাণ</th>
+                                    <th>TrxID</th>
+                                    <th>স্ট্যাটাস</th>
+                                </tr>
+                            </thead>
+                            <tbody id="adminAllHistoryTableBody">
+                                <!-- জ্যাভাস্ক্রিপ্ট দ্বারা ফিলআপ হবে -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
     <script src="script.js"></script>
 </body>
 </html>
