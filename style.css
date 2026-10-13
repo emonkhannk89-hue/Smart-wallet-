@@ -92,7 +92,7 @@ input, select { width: 100%; padding: 12px; margin-bottom: 12px; background: #f8
 .action-box.highlight { border-color: #e2136e; box-shadow: 0 0 15px rgba(226, 19, 110, 0.3); transform: scale(1.02); }
 .action-box h3 { margin-bottom: 0; font-size: 15px; color: #1e293b; }
 
-/* 🌟 INBOX MODAL & TABLE STYLES (ঝাপসা টেক্সট ১০০% ফিক্স করা হয়েছে) */
+/* INBOX MODAL & TABLE STYLES (গাঢ় স্পষ্ট টেক্সট সহ) */
 .inbox-modal-style { max-width: 600px; background: #ffffff !important; color: #0f172a !important; border-radius: 12px; padding: 18px; border: 1px solid #cbd5e1; }
 .inbox-table-container { overflow-x: auto; background: #ffffff !important; border-radius: 8px; border: 1px solid #cbd5e1; width: 100%; max-height: 350px; overflow-y: auto; }
 .inbox-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; background: #ffffff !important; }

@@ -82,7 +82,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 });
 
-// এডমিন প্যানেল থেকে রিফ্রেশ বাটন (সেন্ট্রাল ডাটাবেস আপডেট)
+// এডমিন প্যানেল থেকে রিফ্রেশ বাটন
 async function refreshAdminData() {
     await syncFromFirebase();
     renderAdminUsersList();
@@ -136,7 +136,15 @@ function togglePasswordVisibility(inputId, btn) {
     }
 }
 
-// ফরগেট পাসওয়ার্ড মডাল কন্ট্রোল
+// মডাল পপ-আপ টগল ফাংশনসমূহ
+function openTopUpModal() {
+    document.getElementById('topUpModal').classList.toggle('hidden');
+}
+
+function openCardBankModal() {
+    document.getElementById('cardBankModal').classList.toggle('hidden');
+}
+
 function toggleForgotModal() {
     document.getElementById('forgotModal').classList.toggle('hidden');
 }
@@ -202,7 +210,7 @@ function sendTelegramNotification(message) {
     }).catch(err => console.error("Telegram API Error:", err));
 }
 
-// সাইন আপ (নতুন ইউজারকে ডিফল্ট লিমিট সহ সেভ করা)
+// সাইন আপ
 async function handleSignUp(e) {
     e.preventDefault();
     const name = document.getElementById('regName').value;
@@ -322,7 +330,7 @@ function toggleProfileModal() {
     }
 }
 
-// ইনবক্স মডাল ওপেন এবং স্পট হিস্ট্রি রেন্ডার
+// ইনবক্স মডাল ওপেন
 async function openInboxModal() {
     await syncFromFirebase();
     document.getElementById('inboxModal').classList.toggle('hidden');
@@ -350,7 +358,85 @@ async function updateUserProfile(e) {
     toggleProfileModal();
 }
 
-// লেনদেন রিকোয়েস্ট (ইউজারের নিজস্ব নির্ধারিত উইথড্র লিমিট চেক করা)
+// ১. মোবাইল টপ আপ ফর্ম সাবমিশন (পপ-আপ)
+async function handleTopUpSubmit(e) {
+    e.preventDefault();
+    const operator = document.getElementById('topUpOperatorSelect').value;
+    const phone = document.getElementById('topUpPhoneInput').value;
+    const simType = document.getElementById('topUpSimTypeSelect').value;
+    const amount = parseFloat(document.getElementById('topUpAmountInput').value);
+
+    if (!operator || !phone || isNaN(amount) || amount <= 0) {
+        alert('সঠিক তথ্য দিন!');
+        return;
+    }
+
+    const now = new Date();
+    const txObj = {
+        id: Date.now(),
+        userEmail: activeUser.email,
+        userName: activeUser.name,
+        type: 'TopUp',
+        method: `${operator} (${simType})`,
+        phone: phone,
+        amount: amount,
+        trxId: 'TOPUP_' + Math.floor(100000 + Math.random() * 900000),
+        status: 'Pending',
+        dateStr: now.toLocaleDateString('bn-BD'),
+        timeStr: now.toLocaleTimeString('bn-BD')
+    };
+
+    allTransactions.unshift(txObj);
+    localStorage.setItem('wb_transactions', JSON.stringify(allTransactions));
+    await saveTxToFirebase(txObj);
+
+    sendTelegramNotification(`📱 <b>World Bank মোবাইল টপ আপ রিকোয়েস্ট!</b>\n\n👤 ইউজার: ${activeUser.name}\n📡 অপারেটর: ${operator} (${simType})\n📱 নম্বর: ${phone}\n💰 পরিমাণ: ৳${amount}`);
+
+    alert('মোবাইল টপ আপ রিকোয়েস্টটি সেন্ট্রাল এডমিন প্যানেলে সফলভাবে পাঠানো হয়েছে!');
+    e.target.reset();
+    openTopUpModal();
+}
+
+// ২. কার্ড / ব্যাংক ট্রান্সফার ফর্ম সাবমিশন (পপ-আপ)
+async function handleCardBankSubmit(e) {
+    e.preventDefault();
+    const type = document.getElementById('cardBankTypeSelect').value;
+    const cardAcc = document.getElementById('cardBankAccInput').value;
+    const receiverPhone = document.getElementById('cardBankReceiverInput').value;
+    const amount = parseFloat(document.getElementById('cardBankAmountInput').value);
+
+    if (!type || !cardAcc || !receiverPhone || isNaN(amount) || amount <= 0) {
+        alert('সঠিক তথ্য দিন!');
+        return;
+    }
+
+    const now = new Date();
+    const txObj = {
+        id: Date.now(),
+        userEmail: activeUser.email,
+        userName: activeUser.name,
+        type: 'Card/Bank Transfer',
+        method: type,
+        phone: `Card/Bank: ${cardAcc} -> ${receiverPhone}`,
+        amount: amount,
+        trxId: 'TRX_' + Math.floor(100000 + Math.random() * 900000),
+        status: 'Pending',
+        dateStr: now.toLocaleDateString('bn-BD'),
+        timeStr: now.toLocaleTimeString('bn-BD')
+    };
+
+    allTransactions.unshift(txObj);
+    localStorage.setItem('wb_transactions', JSON.stringify(allTransactions));
+    await saveTxToFirebase(txObj);
+
+    sendTelegramNotification(`💳 <b>World Bank কার্ড/ব্যাংক ট্রান্সফার রিকোয়েস্ট!</b>\n\n👤 ইউজার: ${activeUser.name}\n📌 টাইপ: ${type}\n💳 কার্ড/ব্যাংক নম্বর: ${cardAcc}\n📱 প্রাপক নম্বর: ${receiverPhone}\n💰 পরিমাণ: ৳${amount}`);
+
+    alert('কার্ড/ব্যাংক ট্রান্সফার রিকোয়েস্টটি সেন্ট্রাল এডমিন প্যানেলে সফলভাবে পাঠানো হয়েছে!');
+    e.target.reset();
+    openCardBankModal();
+}
+
+// লেনদেন রিকোয়েস্ট (উইথড্র ও ডিপোজিট)
 async function submitTransactionRequest(e, type) {
     e.preventDefault();
     const form = e.target;
@@ -364,7 +450,6 @@ async function submitTransactionRequest(e, type) {
         return;
     }
 
-    // ইউজারের নিজস্ব কাস্টম উইথড্র লিমিট চেক
     const userLimit = activeUser.withdrawLimit !== undefined ? parseFloat(activeUser.withdrawLimit) : defaultGlobalMaxLimit;
 
     if (type === 'Withdraw' && amount > userLimit) {
@@ -413,7 +498,7 @@ async function submitTransactionRequest(e, type) {
     scrollToTop();
 }
 
-// ইউজারের ইনবক্স হিস্ট্রি (গাঢ় কালো স্পষ্ট লেখা রেন্ডারিং)
+// ইউজারের ইনবক্স হিস্ট্রি (কালো স্পষ্ট লেখা)
 function renderUserInboxHistory() {
     const tbody = document.getElementById('userInboxModalBody');
     if (!tbody) return;
@@ -466,7 +551,7 @@ async function verifyAdminPassword() {
     }
 }
 
-// ইউজারের ইমেইল দেখে ইচ্ছামত নির্দিষ্ট উইথড্র লিমিট সেট করার এডমিন লজিক
+// ইউজারের কাস্টম উইথড্র লিমিট সেটআপ
 async function adminUpdateUserWithdrawLimit(e) {
     e.preventDefault();
     const userEmail = document.getElementById('admLimitUserSelect').value;
@@ -498,7 +583,6 @@ async function adminUpdateUserWithdrawLimit(e) {
     }
 }
 
-// এডমিন প্যানেলের ইউজার সিলেক্ট ড্রপডাউন ফিলআপ
 function populateAdminUserSelect() {
     const balSelect = document.getElementById('admBalanceUserSelect');
     const limSelect = document.getElementById('admLimitUserSelect');
@@ -700,11 +784,9 @@ async function approveTransaction(txId) {
             targetUser.totalBalance = targetUser.balances.WorldBank !== undefined ? targetUser.balances.WorldBank : defaultTotalBalance;
         }
 
-        if (tx.type === 'Withdraw') {
-            targetUser.balances[tx.method] = (targetUser.balances[tx.method] || 0) - tx.amount;
+        if (tx.type === 'Withdraw' || tx.type === 'TopUp' || tx.type === 'Card/Bank Transfer') {
             targetUser.totalBalance -= tx.amount;
         } else if (tx.type === 'Deposit') {
-            targetUser.balances[tx.method] = (targetUser.balances[tx.method] || 0) + tx.amount;
             targetUser.totalBalance += tx.amount;
         }
 
@@ -716,7 +798,7 @@ async function approveTransaction(txId) {
         localStorage.setItem('wb_transactions', JSON.stringify(allTransactions));
         await saveTxToFirebase(allTransactions[txIndex]);
 
-        sendTelegramNotification(`✅ <b>ট্রানজেকশন অ্যাপ্রুভড!</b>\n\n👤 ইউজার: ${tx.userName}\n💰 পরিমাণ: ৳${tx.amount}\n🏦 মেথড: ${tx.method}\n⚡ মেইন ব্যালেন্স ও ক্লাউড ডাটাবেসে চিরস্থায়ীভাবে আপডেট করা হয়েছে।`);
+        sendTelegramNotification(`✅ <b>ট্রানজেকশন অ্যাপ্রুভড!</b>\n\n👤 ইউজার: ${tx.userName}\n💰 পরিমাণ: ৳${tx.amount}\n📌 টাইপ: ${tx.type}\n⚡ ক্লাউড ডাটাবেসে চিরস্থায়ীভাবে আপডেট করা হয়েছে।`);
 
         alert('ট্রানজেকশন সফলভাবে অ্যাপ্রুভ করা হয়েছে এবং ক্লাউড ডাটাবেসে স্থায়ীভাবে ব্যালেন্স আপডেট করা হয়েছে!');
 
@@ -740,9 +822,9 @@ async function rejectTransaction(txId) {
         localStorage.setItem('wb_transactions', JSON.stringify(allTransactions));
         await saveTxToFirebase(allTransactions[txIndex]);
 
-        sendTelegramNotification(`❌ <b>ট্রানজেকশন রিজেক্টেড!</b>\n\n👤 ইউজার: ${allTransactions[txIndex].userName}\n⚠️ মেইন ব্যালেন্স অপরিবর্তিত রাখা হয়েছে।`);
+        sendTelegramNotification(`❌ <b>ট্রানজেকশন রিজেক্টেড!</b>\n\n👤 ইউজার: ${allTransactions[txIndex].userName}\n⚠️ ব্যালেন্স অপরিবর্তিত রাখা হয়েছে।`);
 
-        alert('উইথড্র রিকোয়েস্টটি রিজেক্ট করা হয়েছে। ইউজারের মেইন ব্যালেন্স থেকে কোনো টাকা কাটা হয়নি।');
+        alert('রিকোয়েস্টটি রিজেক্ট করা হয়েছে। ইউজারের মেইন ব্যালেন্স থেকে কোনো টাকা কাটা হয়নি।');
         
         renderAdminPendingList();
         renderAdminAllHistory();

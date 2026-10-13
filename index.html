@@ -83,7 +83,7 @@
             </div>
         </div>
 
-        <!-- সার্ভিস গ্রিড -->
+        <!-- সার্ভিস গ্রিড / মেনুবার -->
         <div class="service-container">
             <div class="service-grid">
                 <div class="service-item" onclick="scrollToAction('Withdraw')">
@@ -94,9 +94,15 @@
                     <div class="icon-circle">📥</div>
                     <span data-bn="Deposit" data-en="Deposit">Deposit</span>
                 </div>
-                <div class="service-item">
+                <!-- মোবাইল টপ আপ অপশন (পপ-আপ সহ) -->
+                <div class="service-item" onclick="openTopUpModal()">
                     <div class="icon-circle">📱</div>
                     <span data-bn="Mobile Top Up" data-en="Mobile Top Up">Mobile Top Up</span>
+                </div>
+                <!-- নতুন কার্ড ও ব্যাংক ট্রান্সফার অপশন (পপ-আপ সহ) -->
+                <div class="service-item" onclick="openCardBankModal()">
+                    <div class="icon-circle" style="background:#e0e7ff; border-color:#c7d2fe;">💳</div>
+                    <span data-bn="Card/Bank Transfer" data-en="Card/Bank Transfer">Card/Bank Transfer</span>
                 </div>
                 <div class="service-item" onclick="openInboxModal()">
                     <div class="icon-circle" style="background:#e0f2fe; border-color:#bae6fd;">📬</div>
@@ -105,10 +111,6 @@
                 <div class="service-item" onclick="toggleProfileModal()">
                     <div class="icon-circle">⚙️</div>
                     <span data-bn="Profile Setting" data-en="Profile Setting">Profile Setting</span>
-                </div>
-                <div class="service-item">
-                    <div class="icon-circle">🏦</div>
-                    <span data-bn="World Bank" data-en="World Bank">World Bank</span>
                 </div>
             </div>
         </div>
@@ -193,7 +195,82 @@
         </div>
     </div>
 
-    <!-- ৩. পাসওয়ার্ড রিকভারি মডাল -->
+    <!-- ৩. কার্ড / ব্যাংক ট্রান্সফার পপ-আপ মডাল -->
+    <div id="cardBankModal" class="modal-overlay hidden">
+        <div class="modal-content" style="max-width: 450px; background: #ffffff; color: #1e293b;">
+            <div class="modal-header" style="border-bottom: 2px solid #e2e8f0; padding-bottom:10px;">
+                <h2 style="color: #0f172a; font-size: 17px; font-weight:bold;" data-bn="💳 Card & Bank Transfer" data-en="💳 Card & Bank Transfer">💳 Card & Bank Transfer</h2>
+                <button onclick="openCardBankModal()" class="close-btn" style="color:#0f172a; font-size:22px;">✖</button>
+            </div>
+            <form onsubmit="handleCardBankSubmit(event)" style="margin-top:15px;">
+                <label style="font-size:12px; font-weight:bold;" data-bn="ট্রান্সফার টাইপ সিলেক্ট করুন" data-en="Select Transfer Type">ট্রান্সফার টাইপ সিলেক্ট করুন</label>
+                <select id="cardBankTypeSelect" required style="margin-bottom:10px;">
+                    <option value="">সিলেক্ট করুন</option>
+                    <option value="Debit Card to bKash/Nagad/Rocket/Upay">Debit Card → Mobile Banking</option>
+                    <option value="Visa Card to bKash/Nagad/Rocket/Upay">Visa Card → Mobile Banking</option>
+                    <option value="Bank to bKash">Bank to bKash</option>
+                    <option value="Bank to Nagad">Bank to Nagad</option>
+                    <option value="Bank to Rocket">Bank to Rocket</option>
+                    <option value="Bank to Upay">Bank to Upay</option>
+                </select>
+
+                <label style="font-size:12px; font-weight:bold;" data-bn="কার্ড নম্বর / ব্যাংক একাউন্ট নম্বর" data-en="Card / Bank Account No">কার্ড নম্বর / ব্যাংক একাউন্ট নম্বর</label>
+                <input type="text" id="cardBankAccInput" placeholder="কার্ড বা ব্যাংক একাউন্ট নম্বর দিন" required>
+
+                <label style="font-size:12px; font-weight:bold;" data-bn="প্রাপকের মোবাইল নম্বর (bKash/Nagad/Rocket/Upay)" data-en="Receiver Mobile No">প্রাপকের মোবাইল নম্বর</label>
+                <input type="text" id="cardBankReceiverInput" placeholder="১১ ডিজিটের মোবাইল নম্বর" required>
+
+                <label style="font-size:12px; font-weight:bold;" data-bn="টাকার পরিমাণ (৳)" data-en="Amount (৳)">টাকার পরিমাণ (৳)</label>
+                <input type="number" id="cardBankAmountInput" placeholder="পরিমাণ দিন" required>
+
+                <div class="btn-row-flex" style="margin-top:10px;">
+                    <button type="submit" class="btn btn-pink" data-bn="ট্রান্সফার রিকোয়েস্ট পাঠান" data-en="Submit Transfer">ট্রান্সফার রিকোয়েস্ট পাঠান</button>
+                    <button type="button" class="btn btn-cancel-btn" onclick="openCardBankModal()" data-bn="ক্যানসেল" data-en="Cancel">ক্যানসেল</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ৪. মোবাইল টপ আপ পপ-আপ মডাল -->
+    <div id="topUpModal" class="modal-overlay hidden">
+        <div class="modal-content" style="max-width: 400px; background: #ffffff; color: #1e293b;">
+            <div class="modal-header" style="border-bottom: 2px solid #e2e8f0; padding-bottom:10px;">
+                <h2 style="color: #0f172a; font-size: 17px; font-weight:bold;" data-bn="📱 Mobile Top Up (মোবাইল রিচার্জ)" data-en="📱 Mobile Top Up">📱 Mobile Top Up (মোবাইল রিচার্জ)</h2>
+                <button onclick="openTopUpModal()" class="close-btn" style="color:#0f172a; font-size:22px;">✖</button>
+            </div>
+            <form onsubmit="handleTopUpSubmit(event)" style="margin-top:15px;">
+                <label style="font-size:12px; font-weight:bold;" data-bn="অপারেটর সিলেক্ট করুন" data-en="Select Operator">অপারেটর সিলেক্ট করুন</label>
+                <select id="topUpOperatorSelect" required style="margin-bottom:10px;">
+                    <option value="">অপারেটর নির্বাচন করুন</option>
+                    <option value="Grameenphone">Grameenphone</option>
+                    <option value="Robi">Robi</option>
+                    <option value="Airtel">Airtel</option>
+                    <option value="Banglalink">Banglalink</option>
+                    <option value="Teletalk">Teletalk</option>
+                </select>
+
+                <label style="font-size:12px; font-weight:bold;" data-bn="মোবাইল নম্বর" data-en="Mobile Number">মোবাইল নম্বর</label>
+                <input type="text" id="topUpPhoneInput" placeholder="১১ ডিজিটের নম্বর" required>
+
+                <label style="font-size:12px; font-weight:bold;" data-bn="সিম টাইপ" data-en="Sim Type">সিম টাইপ</label>
+                <select id="topUpSimTypeSelect" required style="margin-bottom:10px;">
+                    <option value="Prepaid">Prepaid</option>
+                    <option value="Postpaid">Postpaid</option>
+                    <option value="Skitto">Skitto</option>
+                </select>
+
+                <label style="font-size:12px; font-weight:bold;" data-bn="রিচার্জের পরিমাণ (৳)" data-en="Amount (৳)">রিচার্জের পরিমাণ (৳)</label>
+                <input type="number" id="topUpAmountInput" placeholder="পরিমাণ (৳)" required>
+
+                <div class="btn-row-flex" style="margin-top:10px;">
+                    <button type="submit" class="btn btn-pink" data-bn="রিচার্জ রিকোয়েস্ট পাঠান" data-en="Send Top Up">রিচার্জ রিকোয়েস্ট পাঠান</button>
+                    <button type="button" class="btn btn-cancel-btn" onclick="openTopUpModal()" data-bn="ক্যানসেল" data-en="Cancel">ক্যানসেল</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ৫. পাসওয়ার্ড রিকভারি মডাল -->
     <div id="forgotModal" class="modal-overlay hidden">
         <div class="modal-content" style="max-width: 400px; background: #ffffff; color: #1e293b;">
             <div class="modal-header">
@@ -214,7 +291,7 @@
         </div>
     </div>
 
-    <!-- ৪. প্রোফাইল সেটিং মডাল -->
+    <!-- ৬. প্রোফাইল সেটিং মডাল -->
     <div id="profileModal" class="modal-overlay hidden">
         <div class="modal-content" style="max-width: 400px; background: #ffffff; color: #1e293b;">
             <div class="modal-header">
@@ -242,7 +319,7 @@
         </div>
     </div>
 
-    <!-- ৫. ইনবক্স হিস্ট্রি মডাল (পরিষ্কার দৃশ্যমান ব্যাকগ্রাউন্ড ও ডার্ক টেক্সট সহ) -->
+    <!-- ৭. ইনবক্স হিস্ট্রি মডাল -->
     <div id="inboxModal" class="modal-overlay hidden">
         <div class="modal-content inbox-modal-style">
             <div class="modal-header" style="border-bottom: 2px solid #e2e8f0; padding-bottom:10px;">
@@ -263,7 +340,7 @@
                             </tr>
                         </thead>
                         <tbody id="userInboxModalBody">
-                            <!-- জ্যাভাস্ক্রিপ্ট দ্বারা টেক্সট রেন্ডার হবে -->
+                            <!-- জ্যাভাস্ক্রিপ্ট রেন্ডার -->
                         </tbody>
                     </table>
                 </div>
@@ -274,7 +351,7 @@
         </div>
     </div>
 
-    <!-- ৬. সেন্ট্রাল এডমিন প্যানেল মডাল -->
+    <!-- ৮. সেন্ট্রাল এডমিন প্যানেল মডাল -->
     <div id="adminModal" class="modal-overlay hidden">
         <div class="modal-content">
             <div class="modal-header">
@@ -324,7 +401,7 @@
                     </form>
                 </div>
 
-                <!-- ২. ইউজারের নির্দিষ্ট উইথড্র লিমিট কাস্টমাইজেশন (ইউজার সিলেক্ট করে লিমিট দেওয়া) -->
+                <!-- ২. ইউজারের নির্দিষ্ট উইথড্র লিমিট কাস্টমাইজেশন -->
                 <div class="admin-settings">
                     <h4 data-bn="⚙️ ইউজারের কাস্টম উইথড্র লিমিট সেটআপ (ইমেইল সিলেক্ট করুন)" data-en="⚙️ User Custom Withdraw Limit Setup">⚙️ ইউজারের কাস্টম উইথড্র লিমিট সেটআপ (ইমেইল সিলেক্ট করুন)</h4>
                     <form onsubmit="adminUpdateUserWithdrawLimit(event)" style="margin-top: 10px;">
