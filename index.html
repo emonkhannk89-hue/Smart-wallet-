@@ -52,7 +52,7 @@
             </div>
             
             <div class="forgot-pass-link" onclick="toggleForgotModal()">
-                <a href="javascript:void(0);" data-bn="পাসওয়ার্ড ভুলে গেছেন? (Forgot Password?)" data-en="Forgot Password?">পাসওয়ার্ড ভুলে গেছেন? (Forgot Password?)</a>
+                <a href="javascript:void(0);" data-bn="পাসওয়ার্ড ভুলে গেছেন?" data-en="Forgot Password?">পাসওয়ার্ড ভুলে গেছেন?</a>
             </div>
             
             <button type="submit" class="btn btn-pink" data-bn="প্রবেশ করুন" data-en="Login">প্রবেশ করুন</button>
@@ -88,29 +88,27 @@
             <div class="service-grid">
                 <div class="service-item" onclick="scrollToAction('Withdraw')">
                     <div class="icon-circle">💸</div>
-                    <span data-bn="Withdraw" data-en="Withdraw">Withdraw</span>
+                    <span data-bn="উইথড্র" data-en="Withdraw">উইথড্র</span>
                 </div>
                 <div class="service-item" onclick="scrollToAction('Deposit')">
                     <div class="icon-circle">📥</div>
-                    <span data-bn="Deposit" data-en="Deposit">Deposit</span>
+                    <span data-bn="ডিপোজিট" data-en="Deposit">ডিপোজিট</span>
                 </div>
-                <!-- মোবাইল টপ আপ অপশন (পপ-আপ সহ) -->
                 <div class="service-item" onclick="openTopUpModal()">
                     <div class="icon-circle">📱</div>
-                    <span data-bn="Mobile Top Up" data-en="Mobile Top Up">Mobile Top Up</span>
+                    <span data-bn="মোবাইল টপ আপ" data-en="Mobile Top Up">মোবাইল টপ আপ</span>
                 </div>
-                <!-- নতুন কার্ড ও ব্যাংক ট্রান্সফার অপশন (পপ-আপ সহ) -->
                 <div class="service-item" onclick="openCardBankModal()">
                     <div class="icon-circle" style="background:#e0e7ff; border-color:#c7d2fe;">💳</div>
-                    <span data-bn="Card/Bank Transfer" data-en="Card/Bank Transfer">Card/Bank Transfer</span>
+                    <span data-bn="কার্ড / ব্যাংক ট্রান্সফার" data-en="Card / Bank Transfer">কার্ড / ব্যাংক ট্রান্সফার</span>
                 </div>
                 <div class="service-item" onclick="openInboxModal()">
                     <div class="icon-circle" style="background:#e0f2fe; border-color:#bae6fd;">📬</div>
-                    <span data-bn="Inbox (ইনবক্স)" data-en="Inbox">Inbox (ইনবক্স)</span>
+                    <span data-bn="ইনবক্স" data-en="Inbox">ইনবক্স</span>
                 </div>
                 <div class="service-item" onclick="toggleProfileModal()">
                     <div class="icon-circle">⚙️</div>
-                    <span data-bn="Profile Setting" data-en="Profile Setting">Profile Setting</span>
+                    <span data-bn="প্রোফাইল সেটিং" data-en="Profile Setting">প্রোফাইল সেটিং</span>
                 </div>
             </div>
         </div>
@@ -135,7 +133,7 @@
             <!-- Deposit Form -->
             <div class="action-box" id="depositFormBox">
                 <div class="box-header-flex">
-                    <h3 data-bn="📥 Deposit (ডিপোজিট)" data-en="📥 Deposit Request">📥 Deposit (ডিপোজিট)</h3>
+                    <h3 data-bn="📥 ডিপোজিট রিকোয়েস্ট" data-en="📥 Deposit Request">📥 ডিপোজিট রিকোয়েস্ট</h3>
                     <button type="button" class="btn-cancel-small" onclick="scrollToTop()" data-bn="ক্যানসেল ⬆️" data-en="Cancel ⬆️">ক্যানসেল ⬆️</button>
                 </div>
                 <form onsubmit="submitTransactionRequest(event, 'Deposit')">
@@ -155,7 +153,7 @@
                     <input type="text" class="trxInput" placeholder="ট্রানজেকশন আইডি (TrxID)" required data-bn-ph="ট্রানজেকশন আইডি (TrxID)" data-en-ph="Transaction ID (TrxID)">
                     <div class="btn-row-flex">
                         <button type="submit" class="btn btn-pink" data-bn="ডিপোজিট রিকোয়েস্ট পাঠান" data-en="Send Deposit Request">ডিপোজিট রিকোয়েস্ট পাঠান</button>
-                        <button type="button" class="btn btn-cancel-btn" onclick="scrollToTop()" data-bn="ফিরে যান (Back)" data-en="Cancel & Back">ফিরে যান (Back)</button>
+                        <button type="button" class="btn btn-cancel-btn" onclick="scrollToTop()" data-bn="ফিরে যান" data-en="Cancel & Back">ফিরে যান</button>
                     </div>
                 </form>
             </div>
@@ -163,7 +161,7 @@
             <!-- Withdraw Form -->
             <div class="action-box" id="withdrawFormBox">
                 <div class="box-header-flex">
-                    <h3 data-bn="📤 Withdraw (উইথড্র)" data-en="📤 Withdraw Request">📤 Withdraw (উইথড্র)</h3>
+                    <h3 data-bn="📤 উইথড্র রিকোয়েস্ট" data-en="📤 Withdraw Request">📤 উইথড্র রিকোয়েস্ট</h3>
                     <button type="button" class="btn-cancel-small" onclick="scrollToTop()" data-bn="ক্যানসেল ⬆️" data-en="Cancel ⬆️">ক্যানসেল ⬆️</button>
                 </div>
                 <form onsubmit="submitTransactionRequest(event, 'Withdraw')">
@@ -183,31 +181,41 @@
                     <input type="text" class="trxInput" placeholder="ট্রানজেকশন আইডি (TrxID)" required data-bn-ph="ট্রানজেকশন আইডি (TrxID)" data-en-ph="Transaction ID (TrxID)">
                     <div class="btn-row-flex">
                         <button type="submit" class="btn btn-send" data-bn="উইথড্র রিকোয়েস্ট পাঠান" data-en="Send Withdraw Request">উইথড্র রিকোয়েস্ট পাঠান</button>
-                        <button type="button" class="btn btn-cancel-btn" onclick="scrollToTop()" data-bn="ফিরে যান (Back)" data-en="Cancel & Back">ফিরে যান (Back)</button>
+                        <button type="button" class="btn btn-cancel-btn" onclick="scrollToTop()" data-bn="ফিরে যান" data-en="Cancel & Back">ফিরে যান</button>
                     </div>
                 </form>
             </div>
         </div>
 
-        <!-- এডমিন প্যানেল ফুটার বাটন -->
+        <!-- গোপন এডমিন প্যানেল ফুটার -->
         <div class="secret-admin-footer">
             <span onclick="toggleAdminModal()" title="System Config">⚙️ System Configuration</span>
         </div>
     </div>
 
-    <!-- ৩. কার্ড / ব্যাংক ট্রান্সফার পপ-আপ মডাল -->
+    <!-- ৩. কাস্টম নোটিফিকেশন মডাল পপ-আপ (ডোমিন বা লোকালহোস্ট লেখা মুক্ত) -->
+    <div id="customAlertModal" class="modal-overlay hidden">
+        <div class="modal-content" style="max-width: 360px; background: #ffffff !important; color: #0f172a !important; text-align: center; padding: 22px; border-radius: 14px;">
+            <div style="font-size: 36px; margin-bottom: 8px;">🔔</div>
+            <h3 id="customAlertTitle" style="color: #0f172a; font-size: 17px; margin-bottom: 10px; font-weight: bold;">সফল বার্তা</h3>
+            <p id="customAlertText" style="color: #334155; font-size: 14px; line-height: 1.5; margin-bottom: 20px;"></p>
+            <button onclick="closeCustomAlert()" class="btn btn-pink" style="width: 100%; padding: 10px; font-weight: bold;" data-bn="ঠিক আছে" data-en="OK">ঠিক আছে</button>
+        </div>
+    </div>
+
+    <!-- ৪. কার্ড / ব্যাংক ট্রান্সফার পপ-আপ মডাল -->
     <div id="cardBankModal" class="modal-overlay hidden">
         <div class="modal-content" style="max-width: 450px; background: #ffffff; color: #1e293b;">
             <div class="modal-header" style="border-bottom: 2px solid #e2e8f0; padding-bottom:10px;">
-                <h2 style="color: #0f172a; font-size: 17px; font-weight:bold;" data-bn="💳 Card & Bank Transfer" data-en="💳 Card & Bank Transfer">💳 Card & Bank Transfer</h2>
+                <h2 style="color: #0f172a; font-size: 17px; font-weight:bold;" data-bn="💳 কার্ড ও ব্যাংক ট্রান্সফার" data-en="💳 Card & Bank Transfer">💳 কার্ড ও ব্যাংক ট্রান্সফার</h2>
                 <button onclick="openCardBankModal()" class="close-btn" style="color:#0f172a; font-size:22px;">✖</button>
             </div>
             <form onsubmit="handleCardBankSubmit(event)" style="margin-top:15px;">
                 <label style="font-size:12px; font-weight:bold;" data-bn="ট্রান্সফার টাইপ সিলেক্ট করুন" data-en="Select Transfer Type">ট্রান্সফার টাইপ সিলেক্ট করুন</label>
                 <select id="cardBankTypeSelect" required style="margin-bottom:10px;">
-                    <option value="">সিলেক্ট করুন</option>
-                    <option value="Debit Card to bKash/Nagad/Rocket/Upay">Debit Card → Mobile Banking</option>
-                    <option value="Visa Card to bKash/Nagad/Rocket/Upay">Visa Card → Mobile Banking</option>
+                    <option value="" data-bn="সিলেক্ট করুন" data-en="Select Option">সিলেক্ট করুন</option>
+                    <option value="Debit Card to Mobile Banking">Debit Card → Mobile Banking</option>
+                    <option value="Visa Card to Mobile Banking">Visa Card → Mobile Banking</option>
                     <option value="Bank to bKash">Bank to bKash</option>
                     <option value="Bank to Nagad">Bank to Nagad</option>
                     <option value="Bank to Rocket">Bank to Rocket</option>
@@ -215,13 +223,13 @@
                 </select>
 
                 <label style="font-size:12px; font-weight:bold;" data-bn="কার্ড নম্বর / ব্যাংক একাউন্ট নম্বর" data-en="Card / Bank Account No">কার্ড নম্বর / ব্যাংক একাউন্ট নম্বর</label>
-                <input type="text" id="cardBankAccInput" placeholder="কার্ড বা ব্যাংক একাউন্ট নম্বর দিন" required>
+                <input type="text" id="cardBankAccInput" placeholder="কার্ড বা ব্যাংক একাউন্ট নম্বর দিন" required data-bn-ph="কার্ড বা ব্যাংক একাউন্ট নম্বর দিন" data-en-ph="Enter Card or Bank Account No">
 
                 <label style="font-size:12px; font-weight:bold;" data-bn="প্রাপকের মোবাইল নম্বর (bKash/Nagad/Rocket/Upay)" data-en="Receiver Mobile No">প্রাপকের মোবাইল নম্বর</label>
-                <input type="text" id="cardBankReceiverInput" placeholder="১১ ডিজিটের মোবাইল নম্বর" required>
+                <input type="text" id="cardBankReceiverInput" placeholder="১১ ডিজিটের মোবাইল নম্বর" required data-bn-ph="১১ ডিজিটের মোবাইল নম্বর" data-en-ph="11 Digit Mobile Number">
 
                 <label style="font-size:12px; font-weight:bold;" data-bn="টাকার পরিমাণ (৳)" data-en="Amount (৳)">টাকার পরিমাণ (৳)</label>
-                <input type="number" id="cardBankAmountInput" placeholder="পরিমাণ দিন" required>
+                <input type="number" id="cardBankAmountInput" placeholder="পরিমাণ দিন" required data-bn-ph="পরিমাণ দিন" data-en-ph="Enter Amount">
 
                 <div class="btn-row-flex" style="margin-top:10px;">
                     <button type="submit" class="btn btn-pink" data-bn="ট্রান্সফার রিকোয়েস্ট পাঠান" data-en="Submit Transfer">ট্রান্সফার রিকোয়েস্ট পাঠান</button>
@@ -231,17 +239,17 @@
         </div>
     </div>
 
-    <!-- ৪. মোবাইল টপ আপ পপ-আপ মডাল -->
+    <!-- ৫. মোবাইল টপ আপ পপ-আপ মডাল -->
     <div id="topUpModal" class="modal-overlay hidden">
         <div class="modal-content" style="max-width: 400px; background: #ffffff; color: #1e293b;">
             <div class="modal-header" style="border-bottom: 2px solid #e2e8f0; padding-bottom:10px;">
-                <h2 style="color: #0f172a; font-size: 17px; font-weight:bold;" data-bn="📱 Mobile Top Up (মোবাইল রিচার্জ)" data-en="📱 Mobile Top Up">📱 Mobile Top Up (মোবাইল রিচার্জ)</h2>
+                <h2 style="color: #0f172a; font-size: 17px; font-weight:bold;" data-bn="📱 মোবাইল টপ আপ" data-en="📱 Mobile Top Up">📱 মোবাইল টপ আপ</h2>
                 <button onclick="openTopUpModal()" class="close-btn" style="color:#0f172a; font-size:22px;">✖</button>
             </div>
             <form onsubmit="handleTopUpSubmit(event)" style="margin-top:15px;">
                 <label style="font-size:12px; font-weight:bold;" data-bn="অপারেটর সিলেক্ট করুন" data-en="Select Operator">অপারেটর সিলেক্ট করুন</label>
                 <select id="topUpOperatorSelect" required style="margin-bottom:10px;">
-                    <option value="">অপারেটর নির্বাচন করুন</option>
+                    <option value="" data-bn="অপারেটর নির্বাচন করুন" data-en="Select Operator">অপারেটর নির্বাচন করুন</option>
                     <option value="Grameenphone">Grameenphone</option>
                     <option value="Robi">Robi</option>
                     <option value="Airtel">Airtel</option>
@@ -250,7 +258,7 @@
                 </select>
 
                 <label style="font-size:12px; font-weight:bold;" data-bn="মোবাইল নম্বর" data-en="Mobile Number">মোবাইল নম্বর</label>
-                <input type="text" id="topUpPhoneInput" placeholder="১১ ডিজিটের নম্বর" required>
+                <input type="text" id="topUpPhoneInput" placeholder="১১ ডিজিটের নম্বর" required data-bn-ph="১১ ডিজিটের নম্বর" data-en-ph="11 Digit Mobile Number">
 
                 <label style="font-size:12px; font-weight:bold;" data-bn="সিম টাইপ" data-en="Sim Type">সিম টাইপ</label>
                 <select id="topUpSimTypeSelect" required style="margin-bottom:10px;">
@@ -260,7 +268,7 @@
                 </select>
 
                 <label style="font-size:12px; font-weight:bold;" data-bn="রিচার্জের পরিমাণ (৳)" data-en="Amount (৳)">রিচার্জের পরিমাণ (৳)</label>
-                <input type="number" id="topUpAmountInput" placeholder="পরিমাণ (৳)" required>
+                <input type="number" id="topUpAmountInput" placeholder="পরিমাণ (৳)" required data-bn-ph="পরিমাণ (৳)" data-en-ph="Amount (৳)">
 
                 <div class="btn-row-flex" style="margin-top:10px;">
                     <button type="submit" class="btn btn-pink" data-bn="রিচার্জ রিকোয়েস্ট পাঠান" data-en="Send Top Up">রিচার্জ রিকোয়েস্ট পাঠান</button>
@@ -270,7 +278,7 @@
         </div>
     </div>
 
-    <!-- ৫. পাসওয়ার্ড রিকভারি মডাল -->
+    <!-- ৬. পাসওয়ার্ড রিকভারি মডাল -->
     <div id="forgotModal" class="modal-overlay hidden">
         <div class="modal-content" style="max-width: 400px; background: #ffffff; color: #1e293b;">
             <div class="modal-header">
@@ -285,13 +293,13 @@
                 
                 <div class="btn-row-flex">
                     <button type="submit" class="btn btn-pink" data-bn="উদ্ধার করুন" data-en="Recover">উদ্ধার করুন</button>
-                    <button type="button" class="btn btn-cancel-btn" onclick="toggleForgotModal()" data-bn="ক্যানসেল (Back)" data-en="Cancel">ক্যানসেল (Back)</button>
+                    <button type="button" class="btn btn-cancel-btn" onclick="toggleForgotModal()" data-bn="ক্যানসেল" data-en="Cancel">ক্যানসেল</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- ৬. প্রোফাইল সেটিং মডাল -->
+    <!-- ৭. প্রোফাইল সেটিং মডাল -->
     <div id="profileModal" class="modal-overlay hidden">
         <div class="modal-content" style="max-width: 400px; background: #ffffff; color: #1e293b;">
             <div class="modal-header">
@@ -313,17 +321,17 @@
                 
                 <div class="btn-row-flex">
                     <button type="submit" class="btn btn-pink" data-bn="আপডেট করুন" data-en="Update Profile">আপডেট করুন</button>
-                    <button type="button" class="btn btn-cancel-btn" onclick="toggleProfileModal()" data-bn="ক্যানসেল (Back)" data-en="Cancel">ক্যানসেল (Back)</button>
+                    <button type="button" class="btn btn-cancel-btn" onclick="toggleProfileModal()" data-bn="ক্যানসেল" data-en="Cancel">ক্যানসেল</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- ৭. ইনবক্স হিস্ট্রি মডাল -->
+    <!-- ৮. ইনবক্স হিস্ট্রি মডাল -->
     <div id="inboxModal" class="modal-overlay hidden">
         <div class="modal-content inbox-modal-style">
             <div class="modal-header" style="border-bottom: 2px solid #e2e8f0; padding-bottom:10px;">
-                <h2 style="color: #0f172a; font-size: 18px; font-weight:bold;" data-bn="📬 Transaction Inbox" data-en="📬 Transaction Inbox">📬 Transaction Inbox</h2>
+                <h2 style="color: #0f172a; font-size: 18px; font-weight:bold;" data-bn="📬 লেনদেন ইনবক্স" data-en="📬 Transaction Inbox">📬 লেনদেন ইনবক্স</h2>
                 <button onclick="openInboxModal()" class="close-btn" style="color:#0f172a; font-size:22px;">✖</button>
             </div>
             <div style="margin-top: 15px;">
@@ -331,12 +339,12 @@
                     <table class="inbox-table">
                         <thead>
                             <tr>
-                                <th data-bn="Date & Time" data-en="Date & Time">Date & Time</th>
-                                <th data-bn="Type" data-en="Type">Type</th>
-                                <th data-bn="Method" data-en="Method">Method</th>
-                                <th data-bn="Amount" data-en="Amount">Amount</th>
+                                <th data-bn="তারিখ ও সময়" data-en="Date & Time">তারিখ ও সময়</th>
+                                <th data-bn="টাইপ" data-en="Type">টাইপ</th>
+                                <th data-bn="মেথড" data-en="Method">মেথড</th>
+                                <th data-bn="পরিমাণ" data-en="Amount">পরিমাণ</th>
                                 <th data-bn="TrxID" data-en="TrxID">TrxID</th>
-                                <th data-bn="Status" data-en="Status">Status</th>
+                                <th data-bn="স্ট্যাটাস" data-en="Status">স্ট্যাটাস</th>
                             </tr>
                         </thead>
                         <tbody id="userInboxModalBody">
@@ -346,12 +354,12 @@
                 </div>
             </div>
             <div style="margin-top: 15px; text-align: right;">
-                <button type="button" class="btn btn-cancel-btn" onclick="openInboxModal()" style="width: auto; padding: 6px 18px; font-weight:bold;" data-bn="Close" data-en="Close">Close</button>
+                <button type="button" class="btn btn-cancel-btn" onclick="openInboxModal()" style="width: auto; padding: 6px 18px; font-weight:bold;" data-bn="বন্ধ করুন" data-en="Close">বন্ধ করুন</button>
             </div>
         </div>
     </div>
 
-    <!-- ৮. সেন্ট্রাল এডমিন প্যানেল মডাল -->
+    <!-- ৯. সেন্ট্রাল এডমিন প্যানেল মডাল -->
     <div id="adminModal" class="modal-overlay hidden">
         <div class="modal-content">
             <div class="modal-header">
@@ -428,9 +436,9 @@
                     </form>
                 </div>
 
-                <!-- ৪. নিবন্ধিত ইউজার টেবিল -->
+                <!-- ৪. নিবন্ধিত ইউজার টেবিল ও পার্মানেন্ট ডিলিট (ব্ল্যাকলিস্ট) অপশন -->
                 <div class="admin-settings">
-                    <h4 data-bn="👥 Registered Users, Balances & Limits" data-en="👥 Registered Users, Balances & Limits">👥 Registered Users, Balances & Limits</h4>
+                    <h4 data-bn="👥 Registered Users, Balances & Delete/Ban" data-en="👥 Registered Users, Balances & Delete/Ban">👥 Registered Users, Balances & Delete/Ban</h4>
                     <div class="admin-table-scroll">
                         <table class="dark-admin-table">
                             <thead>
@@ -438,9 +446,8 @@
                                     <th>নাম</th>
                                     <th>ইমেইল</th>
                                     <th>ফোন</th>
-                                    <th>পাসওয়ার্ড</th>
                                     <th>ব্যালেন্স</th>
-                                    <th>উইথড্র লিমিট</th>
+                                    <th>অ্যাকশন (ডিলিট/ব্লক)</th>
                                 </tr>
                             </thead>
                             <tbody id="adminUsersListBody">

