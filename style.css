@@ -59,7 +59,7 @@ input, select { width: 100%; padding: 12px; margin-bottom: 12px; background: #f8
 .user-text { display: flex; flex-direction: column; gap: 4px; }
 #userPhoneDisp { font-size: 14px; font-weight: 600; letter-spacing: 0.5px; }
 
-/* Balance Pill Button */
+/* Header Balance Pill Button */
 .balance-pill { background: #ffffff; color: #e2136e; padding: 5px 14px; border-radius: 20px; font-size: 13px; font-weight: bold; display: flex; align-items: center; gap: 6px; cursor: pointer; user-select: none; box-shadow: 0 2px 8px rgba(0,0,0,0.15); transition: all 0.2s ease; width: fit-content; }
 .balance-pill:active { transform: scale(0.96); }
 .currency-symbol { background: #e2136e; color: white; border-radius: 50%; width: 18px; height: 18px; display: inline-flex; justify-content: center; align-items: center; font-size: 11px; }
@@ -76,16 +76,6 @@ input, select { width: 100%; padding: 12px; margin-bottom: 12px; background: #f8
 .icon-circle { width: 46px; height: 46px; background: #fff0f5; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; border: 1px solid #fce7f3; }
 .service-item span { font-size: 11px; font-weight: 600; color: #334155; }
 
-/* Bank Section */
-.bank-section { padding: 0 15px; margin-bottom: 20px; }
-.bank-section h3 { font-size: 15px; color: #1e293b; margin-bottom: 12px; }
-.cards-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
-.card { background: #f8fafc; padding: 12px; border-radius: 10px; border: 1px solid #e2e8f0; }
-.card h4 { color: #64748b; font-size: 12px; }
-.card h3 { font-size: 16px; margin-top: 4px; color: #0f172a; }
-.worldbank-card { background: #fdf2f8; border-color: #fbcfe8; }
-.worldbank-card h3 { color: #be123c; }
-
 /* Action Forms & Highlight Animation */
 .actions-grid { padding: 0 15px; display: flex; flex-direction: column; gap: 15px; margin-bottom: 20px; }
 .action-box { background: #f8fafc; padding: 16px; border-radius: 12px; border: 1px solid #e2e8f0; transition: all 0.3s ease; }
@@ -101,7 +91,7 @@ input, select { width: 100%; padding: 12px; margin-bottom: 12px; background: #f8
 
 /* Admin Modal & Dark Tables */
 .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: flex; justify-content: center; align-items: center; z-index: 1000; padding: 10px; }
-.modal-content { background: #0f172a !important; color: #f8fafc !important; border: 1px solid #334155; width: 100%; max-width: 650px; border-radius: 12px; padding: 16px; max-height: 90vh; overflow-y: auto; }
+.modal-content { background: #0f172a !important; color: #f8fafc !important; border: 1px solid #334155; width: 100%; max-width: 680px; border-radius: 12px; padding: 16px; max-height: 90vh; overflow-y: auto; }
 .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #334155; padding-bottom: 10px; }
 .close-btn { background: transparent; border: none; color: #94a3b8; font-size: 20px; cursor: pointer; }
 
@@ -109,7 +99,7 @@ input, select { width: 100%; padding: 12px; margin-bottom: 12px; background: #f8
 .admin-settings h4 { color: #f8fafc; margin-bottom: 8px; font-size: 14px; }
 
 .admin-table-scroll { max-height: 200px; overflow-y: auto; overflow-x: auto; display: block; border: 1px solid #334155; border-radius: 6px; background: #0f172a !important; }
-.dark-admin-table { width: 100%; min-width: 550px; border-collapse: collapse; background: #0f172a !important; }
+.dark-admin-table { width: 100%; min-width: 600px; border-collapse: collapse; background: #0f172a !important; }
 .dark-admin-table th { background: #1e293b !important; color: #38bdf8 !important; padding: 8px; font-size: 12px; border-bottom: 1px solid #334155; position: sticky; top: 0; }
 .dark-admin-table td { background: #0f172a !important; color: #f8fafc !important; padding: 8px; font-size: 12px; border-bottom: 1px solid #1e293b; white-space: nowrap; }
 

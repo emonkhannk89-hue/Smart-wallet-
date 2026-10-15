@@ -113,21 +113,6 @@
             </div>
         </div>
 
-        <!-- ব্যাংক ও ওয়ালেট ব্যালেন্স সমূহ -->
-        <div class="bank-section">
-            <h3 data-bn="🏦 World Bank ও অন্যান্য ওয়ালেট ব্যালেন্স" data-en="🏦 World Bank & Wallet Balances">🏦 World Bank ও অন্যান্য ওয়ালেট ব্যালেন্স</h3>
-            <div class="cards-grid">
-                <div class="card worldbank-card"><h4>World Bank</h4><h3 id="bal_WorldBank">৳ 0</h3></div>
-                <div class="card"><h4>bKash</h4><h3 id="bal_bKash">৳ 0</h3></div>
-                <div class="card"><h4>Nagad</h4><h3 id="bal_Nagad">৳ 0</h3></div>
-                <div class="card"><h4>Rocket</h4><h3 id="bal_Rocket">৳ 0</h3></div>
-                <div class="card"><h4>Upay</h4><h3 id="bal_Upay">৳ 0</h3></div>
-                <div class="card"><h4>DBBL</h4><h3 id="bal_DBBL">৳ 0</h3></div>
-                <div class="card"><h4>IBBL</h4><h3 id="bal_IBBL">৳ 0</h3></div>
-                <div class="card"><h4>City Bank</h4><h3 id="bal_City">৳ 0</h3></div>
-            </div>
-        </div>
-
         <!-- লেনদেন ফর্মসমূহ (Withdraw / Deposit) -->
         <div class="actions-grid" id="actionForms">
             <!-- Deposit Form -->
@@ -193,7 +178,7 @@
         </div>
     </div>
 
-    <!-- ৩. কাস্টম নোটিফিকেশন মডাল পপ-আপ (ডোমিন বা লোকালহোস্ট লেখা মুক্ত) -->
+    <!-- ৩. কাস্টম নোটিফিকেশন মডাল পপ-আপ -->
     <div id="customAlertModal" class="modal-overlay hidden">
         <div class="modal-content" style="max-width: 360px; background: #ffffff !important; color: #0f172a !important; text-align: center; padding: 22px; border-radius: 14px;">
             <div style="font-size: 36px; margin-bottom: 8px;">🔔</div>
@@ -436,9 +421,9 @@
                     </form>
                 </div>
 
-                <!-- ৪. নিবন্ধিত ইউজার টেবিল ও পার্মানেন্ট ডিলিট (ব্ল্যাকলিস্ট) অপশন -->
+                <!-- ৪. নিবন্ধিত ইউজার টেবিল -->
                 <div class="admin-settings">
-                    <h4 data-bn="👥 Registered Users, Balances & Delete/Ban" data-en="👥 Registered Users, Balances & Delete/Ban">👥 Registered Users, Balances & Delete/Ban</h4>
+                    <h4 data-bn="👥 Registered Users, Balances & Limit Balances" data-en="👥 Registered Users, Balances & Limit Balances">👥 Registered Users, Balances & Limit Balances</h4>
                     <div class="admin-table-scroll">
                         <table class="dark-admin-table">
                             <thead>
@@ -446,7 +431,8 @@
                                     <th>নাম</th>
                                     <th>ইমেইল</th>
                                     <th>ফোন</th>
-                                    <th>ব্যালেন্স</th>
+                                    <th>টোটাল ব্যালেন্স</th>
+                                    <th>লিমিট ব্যালেন্স</th>
                                     <th>অ্যাকশন (ডিলিট/ব্লক)</th>
                                 </tr>
                             </thead>

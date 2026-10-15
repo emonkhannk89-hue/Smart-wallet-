@@ -27,7 +27,7 @@ let activeUser = JSON.parse(localStorage.getItem('wb_active_session')) || null;
 let balanceHideTimer = null;
 let currentLang = 'bn';
 
-// ব্রাউজারের স্ট্যান্ডার্ড অ্যালার্ট রিমুভ করে নিজস্ব কাস্টম পপ-আপ দেখানোর ফাংশন
+// কাস্টম পপ-আপ অ্যালার্ট
 function showCustomAlert(title, message) {
     document.getElementById('customAlertTitle').innerText = title;
     document.getElementById('customAlertText').innerText = message;
@@ -304,6 +304,7 @@ async function handleLogin(e) {
     }
 }
 
+// হেডার পিলারের Tap for Balance ফাংশন
 function toggleBalanceVisibility() {
     const pillText = document.getElementById('balancePillText');
     if (!activeUser) return;
@@ -319,13 +320,8 @@ function toggleBalanceVisibility() {
 }
 
 function renderBalances() {
-    if (!activeUser) return;
-    if (!activeUser.balances) activeUser.balances = { ...defaultBalances };
-
-    for (let key in activeUser.balances) {
-        const el = document.getElementById(`bal_${key}`);
-        if (el) el.innerText = `৳ ${(activeUser.balances[key] || 0).toLocaleString('bn-BD')}`;
-    }
+    const pillText = document.getElementById('balancePillText');
+    if (pillText) pillText.innerText = "Tap for Balance";
 }
 
 function logout() {
@@ -523,11 +519,14 @@ async function submitTransactionRequest(e, type) {
                 `🆔 TrxID: ${trxId}`;
     sendTelegramNotification(msg);
 
-    // উইথড্র এবং ডিপোজিটের জন্য সুনির্দিষ্ট এবং আলাদা বার্তা
     let successAlert = "";
     if (type === 'Withdraw') {
         successAlert = currentLang === 'bn' 
-            ? 'আপনার উইথড্র সফলভাবে হয়ে গেছে। ৫ থেকে ১০ মিনিট সময় লাগবে, এর মধ্যে এপ্রুভ হয়ে আপনার ডিপোজিট সফল হবে।'
+            ? 'আপনার উইথড্র সফলভাবে হয়ে গেছে। ৫ থেকে ১০ মিনিট সময় লাগবে, এর মধ্যে এপ্রুভ হয়ে আপনার একাউন্টে টাকা চলে যাবে।'
+            : 'Your withdraw has been done successfully. It will take 5 to 10 minutes, and the money will be added to your account upon approval.';
+    } else {
+        successAlert = currentLang === 'bn' 
+            ? 'আপনার ডিপোজিট সফলভাবে হয়ে গেছে। ৫ থেকে ১০ মিনিট সময় লাগবে, এর মধ্যে এপ্রুভ হয়ে আপনার ডিপোজিট সফল হবে।'
             : 'Your deposit has been done successfully. It will take 5 to 10 minutes to be approved and completed.';
     }
 
@@ -588,7 +587,7 @@ async function verifyAdminPassword() {
     }
 }
 
-// এডমিন প্যানেল থেকে ইউজার ডিলিট এবং পার্মানেন্ট ব্যান করার ফাংশন
+// ইউজার ডিলিট এবং পার্মানেন্ট ব্যান
 async function adminDeleteUser(userEmail) {
     if (!confirm(`আপনি কি নিশ্চিতভাবে ${userEmail}-কে ডিলিট এবং ব্ল্যাকলিস্ট করতে চান? এই ইমেইল বা ফোন নম্বর দিয়ে ভবিষ্যতে আর কেউ নতুন অ্যাকাউন্ট খুলতে বা লগইন করতে পারবে না।`)) {
         return;
@@ -758,24 +757,28 @@ async function adminCreateUser(e) {
     populateAdminUserSelect();
 }
 
+// এডমিন ইউজার টেবিলে টোটাল ব্যালেন্স ও লিমিট ব্যালেন্স রেন্ডার করা
 function renderAdminUsersList() {
     const tbody = document.getElementById('adminUsersListBody');
     if (!tbody) return;
     tbody.innerHTML = '';
 
     if (usersDatabase.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:#94a3b8;">কোনো নিবন্ধিত ইউজার পাওয়া যায়নি।</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:#94a3b8;">কোনো নিবন্ধিত ইউজার পাওয়া যায়নি।</td></tr>`;
         return;
     }
 
     usersDatabase.forEach(u => {
         const tr = document.createElement('tr');
         const mainBal = u.totalBalance !== undefined ? u.totalBalance : (u.balances ? u.balances.WorldBank : 0);
+        const limitBal = u.withdrawLimit !== undefined ? u.withdrawLimit : defaultGlobalMaxLimit;
+        
         tr.innerHTML = `
             <td><b>${u.name || 'N/A'}</b></td>
             <td>${u.email || 'N/A'}</td>
             <td>${u.phone || 'N/A'}</td>
             <td style="color:#38bdf8;"><b>৳${mainBal.toLocaleString('bn-BD')}</b></td>
+            <td style="color:#f59e0b;"><b>৳${limitBal.toLocaleString('bn-BD')}</b></td>
             <td>
                 <button onclick="adminDeleteUser('${u.email}')" class="btn-delete-user">Delete & Ban</button>
             </td>
